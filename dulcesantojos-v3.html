@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dulces Antojos — Pastelería & Shop</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Dancing+Script:wght@700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #0D0D0D;
+  --dark: #141414;
+  --card: #1A1A1A;
+  --card2: #1E1E1E;
+  --border: #2A2A2A;
+  --gold: #E8A820;
+  --gold-light: #F5C84A;
+  --gold-dark: #B8851A;
+  --white: #FFFFFF;
+  --gray: #888;
+  --soft: #CCCCCC;
+  --green: #25D366;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body { font-family:'Outfit',sans-serif; background:var(--black); color:var(--white); overflow-x:hidden; }
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:var(--dark); }
+::-webkit-scrollbar-thumb { background:var(--gold-dark); border-radius:2px; }
+
+/* ── NAV ── */
+nav {
+  position:fixed; top:0; width:100%; z-index:600;
+  background:rgba(13,13,13,0.97); backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(232,168,32,0.12);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 5%; height:68px;
+}
+.nav-logo { display:flex; flex-direction:column; line-height:1; cursor:pointer; }
+.nav-logo .l1 { font-family:'Bebas Neue',sans-serif; font-size:1.25rem; letter-spacing:.1em; color:var(--white); }
+.nav-logo .l2 { font-family:'Dancing Script',cursive; font-size:1.45rem; color:var(--gold); line-height:.9; }
+
+/* MODE TOGGLE */
+.mode-toggle {
+  display:flex; background:var(--card); border:1px solid var(--border);
+  border-radius:6px; overflow:hidden; padding:3px; gap:3px;
+}
+.mode-btn {
+  padding:.45rem 1.2rem; font-size:.78rem; font-weight:600; letter-spacing:.08em;
+  text-transform:uppercase; border:none; cursor:pointer;
+  font-family:'Outfit',sans-serif; border-radius:4px;
+  transition:all .2s; color:var(--gray); background:transparent;
+}
+.mode-btn.active { background:var(--gold); color:var(--black); }
+
+.nav-right { display:flex; align-items:center; gap:1rem; }
+.cart-btn {
+  background:var(--gold); color:var(--black); border:none;
+  padding:.55rem 1.3rem; border-radius:4px;
+  font-family:'Outfit',sans-serif; font-weight:700; font-size:.8rem;
+  letter-spacing:.08em; text-transform:uppercase; cursor:pointer;
+  display:flex; align-items:center; gap:.5rem; transition:background .2s;
+}
+.cart-btn:hover { background:var(--gold-light); }
+.cart-badge {
+  background:var(--black); color:var(--gold);
+  border-radius:50%; width:19px; height:19px; font-size:.7rem; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+}
+.wa-nav {
+  background:transparent; border:1px solid rgba(37,211,102,.3);
+  color:var(--green); padding:.5rem .9rem; border-radius:4px;
+  font-size:.75rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+  cursor:pointer; transition:all .2s; text-decoration:none; display:flex; align-items:center; gap:.4rem;
+}
+.wa-nav:hover { background:rgba(37,211,102,.1); border-color:var(--green); }
+
+/* ── HERO SPLIT ── */
+.hero-split {
+  min-height:100vh; display:grid; grid-template-columns:1fr 1fr;
+  padding-top:68px; border-bottom:1px solid var(--border);
+}
+.hero-pane {
+  display:flex; flex-direction:column; justify-content:center;
+  padding:8% 8%; position:relative; overflow:hidden; cursor:pointer;
+  transition:background .4s;
+}
+.hero-pane.pasteleria { border-right:1px solid var(--border); }
+.hero-pane.pasteleria::before {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(ellipse 70% 60% at 30% 50%, rgba(232,168,32,.07) 0%, transparent 70%);
+  pointer-events:none;
+}
+.hero-pane.shop::before {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(ellipse 70% 60% at 70% 50%, rgba(232,168,32,.05) 0%, transparent 70%);
+  pointer-events:none;
+}
+.hero-pane:hover { background:rgba(255,255,255,.015); }
+
+.pane-tag {
+  display:inline-flex; align-items:center; gap:.5rem;
+  border:1px solid rgba(232,168,32,.25); border-radius:2px;
+  padding:.35rem 1rem; font-size:.68rem; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--gold); font-weight:500;
+  margin-bottom:2rem; width:fit-content; position:relative; z-index:1;
+}
+.pane-icon { font-size:5rem; margin-bottom:1.5rem; position:relative; z-index:1; }
+.pane-title { position:relative; z-index:1; margin-bottom:1.2rem; }
+.pane-title .big {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(2.5rem,5vw,4.5rem); letter-spacing:.04em;
+  color:var(--white); display:block; line-height:.9;
+}
+.pane-title .script {
+  font-family:'Dancing Script',cursive;
+  font-size:clamp(2rem,4vw,3.5rem); color:var(--gold); display:block;
+}
+.pane-desc {
+  font-size:.9rem; color:var(--gray); line-height:1.7; font-weight:300;
+  max-width:380px; margin-bottom:2rem; position:relative; z-index:1;
+}
+.pane-cta {
+  background:var(--gold); color:var(--black); border:none;
+  padding:.85rem 2rem; border-radius:4px; font-family:'Outfit',sans-serif;
+  font-weight:700; font-size:.82rem; letter-spacing:.1em; text-transform:uppercase;
+  cursor:pointer; transition:all .2s; display:inline-block; width:fit-content;
+  position:relative; z-index:1;
+}
+.pane-cta:hover { background:var(--gold-light); transform:translateY(-2px); }
+.pane-cta.outline {
+  background:transparent; color:var(--gold);
+  border:1px solid rgba(232,168,32,.35);
+}
+.pane-cta.outline:hover { background:rgba(232,168,32,.08); }
+
+/* ── MARQUEE ── */
+.marquee-bar { background:var(--gold); overflow:hidden; padding:.7rem 0; }
+.marquee-track { display:flex; animation:scroll 30s linear infinite; white-space:nowrap; }
+.marquee-track span { font-family:'Bebas Neue',sans-serif; font-size:.95rem; letter-spacing:.18em; color:var(--black); padding:0 2rem; }
+@keyframes scroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+/* ── SECTIONS ── */
+.catalog-section { padding:5rem 5% 6rem; }
+.catalog-section.hidden { display:none; }
+
+.sec-header { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:2.5rem; flex-wrap:wrap; gap:1.5rem; }
+.sec-label { font-size:.7rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); font-weight:500; margin-bottom:.6rem; }
+.sec-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(2rem,4vw,3.2rem); letter-spacing:.04em; line-height:1; }
+.sec-title em { font-style:normal; color:var(--gold); font-family:'Dancing Script',cursive; font-size:.85em; }
+
+/* FILTERS */
+.filters { display:flex; gap:.5rem; flex-wrap:wrap; }
+.f-btn {
+  border:1px solid var(--border); background:transparent; color:var(--gray);
+  padding:.45rem 1.1rem; border-radius:2px; font-family:'Outfit',sans-serif;
+  font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; transition:all .2s;
+}
+.f-btn:hover, .f-btn.active { background:var(--gold); color:var(--black); border-color:var(--gold); font-weight:600; }
+
+/* GRID */
+.products-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+  gap:1.5px; background:var(--border); border:1px solid var(--border);
+}
+
+/* PRODUCT CARD */
+.p-card { background:var(--card); overflow:hidden; transition:background .3s; cursor:pointer; }
+.p-card:hover { background:var(--card2); }
+.p-img {
+  height:220px; background:linear-gradient(145deg,#1C1C1C,#222);
+  display:flex; align-items:center; justify-content:center;
+  position:relative; overflow:hidden;
+}
+.p-emoji { font-size:6.5rem; transition:transform .4s cubic-bezier(.34,1.56,.64,1); }
+.p-card:hover .p-emoji { transform:scale(1.1) rotate(-4deg); }
+.stock-tag {
+  position:absolute; top:12px; left:12px;
+  font-size:.65rem; letter-spacing:.1em; text-transform:uppercase;
+  padding:.28rem .75rem; border-radius:2px; font-weight:600;
+}
+.s-ok  { background:rgba(232,168,32,.12); color:var(--gold); border:1px solid rgba(232,168,32,.25); }
+.s-low { background:rgba(200,60,60,.12); color:#E07070; border:1px solid rgba(200,60,60,.25); }
+.s-out { background:rgba(80,80,80,.2); color:var(--gray); border:1px solid var(--border); }
+.hi-tag {
+  position:absolute; top:12px; right:12px;
+  background:var(--gold); color:var(--black);
+  font-size:.62rem; letter-spacing:.1em; text-transform:uppercase;
+  padding:.28rem .7rem; font-weight:700; border-radius:2px;
+}
+.p-body { padding:1.5rem 1.8rem 1.8rem; }
+.p-cat { font-size:.65rem; letter-spacing:.15em; text-transform:uppercase; color:var(--gold-dark); font-weight:500; margin-bottom:.4rem; }
+.p-name { font-family:'Bebas Neue',sans-serif; font-size:1.45rem; letter-spacing:.04em; margin-bottom:.4rem; line-height:1; }
+.p-desc { font-size:.82rem; color:var(--gray); line-height:1.6; margin-bottom:1.3rem; font-weight:300; }
+.p-foot { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.price-box .lbl { font-size:.62rem; color:var(--gray); letter-spacing:.1em; text-transform:uppercase; }
+.price-box .price { font-family:'Bebas Neue',sans-serif; font-size:1.75rem; color:var(--gold); letter-spacing:.02em; line-height:1; }
+.price-box .unit { font-size:.68rem; color:var(--gray); }
+.qty-wrap { display:flex; align-items:center; gap:.65rem; }
+.q-btn {
+  width:30px; height:30px; border-radius:50%; background:var(--border);
+  border:1px solid #333; color:var(--white); font-size:1.05rem;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:all .2s;
+}
+.q-btn:hover { background:var(--gold); color:var(--black); border-color:var(--gold); }
+.q-btn:disabled { opacity:.3; cursor:not-allowed; }
+.q-num { font-weight:700; font-size:.95rem; min-width:22px; text-align:center; }
+.add-btn {
+  width:100%; margin-top:1.1rem; padding:.72rem;
+  background:transparent; color:var(--gold);
+  border:1px solid rgba(232,168,32,.3); border-radius:2px;
+  font-family:'Outfit',sans-serif; font-size:.78rem; font-weight:600;
+  letter-spacing:.1em; text-transform:uppercase; cursor:pointer; transition:all .2s;
+}
+.add-btn:hover { background:var(--gold); color:var(--black); border-color:var(--gold); }
+.add-btn:disabled { opacity:.3; cursor:not-allowed; }
+
+/* SHOP CARDS — cajas */
+.box-note {
+  background:var(--card); border:1px solid rgba(232,168,32,.15); border-radius:4px;
+  padding:1.2rem 1.8rem; margin-bottom:2.5rem;
+  display:flex; align-items:center; gap:1rem;
+  font-size:.85rem; color:var(--gray); line-height:1.6;
+}
+.box-note span { font-size:1.5rem; flex-shrink:0; }
+.box-note strong { color:var(--white); }
+
+/* ── FEATURES ── */
+.feats {
+  border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+  display:grid; grid-template-columns:repeat(4,1fr);
+}
+.feat {
+  padding:2.2rem 1.8rem; border-right:1px solid var(--border);
+  display:flex; align-items:flex-start; gap:1rem; transition:background .2s;
+}
+.feat:hover { background:var(--card); }
+.feat:last-child { border-right:none; }
+.feat .fi { font-size:1.7rem; flex-shrink:0; }
+.feat h4 { font-size:.82rem; font-weight:600; margin-bottom:.3rem; letter-spacing:.04em; }
+.feat p { font-size:.76rem; color:var(--gray); line-height:1.5; font-weight:300; }
+
+/* ── CART DRAWER ── */
+.overlay { display:none; position:fixed; inset:0; z-index:900; background:rgba(0,0,0,.8); backdrop-filter:blur(6px); }
+.overlay.open { display:flex; justify-content:flex-end; }
+.drawer {
+  width:440px; max-width:100vw; height:100%; background:var(--dark);
+  border-left:1px solid var(--border); display:flex; flex-direction:column;
+  animation:dIn .3s ease;
+}
+@keyframes dIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+.d-head {
+  padding:1.8rem 2rem 1.4rem; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
+}
+.d-title { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:.06em; }
+.d-title span { color:var(--gold); }
+.d-close { background:none; border:none; color:var(--gray); font-size:1.15rem; cursor:pointer; transition:color .2s; }
+.d-close:hover { color:var(--white); }
+.d-body { flex:1; overflow-y:auto; padding:1.5rem 2rem; }
+.empty { text-align:center; padding:4rem 1rem; }
+.empty .ei { font-size:3.5rem; display:block; margin-bottom:1rem; opacity:.3; }
+.empty p { color:var(--gray); font-size:.88rem; }
+.c-item { display:flex; align-items:center; gap:1rem; padding:1.1rem 0; border-bottom:1px solid var(--border); }
+.c-em { font-size:2rem; flex-shrink:0; }
+.c-info { flex:1; }
+.c-name { font-size:.88rem; font-weight:600; margin-bottom:.2rem; }
+.c-price { font-family:'Bebas Neue',sans-serif; font-size:1.1rem; color:var(--gold); letter-spacing:.03em; }
+.c-qty { display:flex; align-items:center; gap:.45rem; }
+.del-block { background:#1A1A1A; border:1px solid var(--border); border-radius:4px; padding:1.4rem; margin:1.4rem 0; }
+.del-block h3 { font-family:'Bebas Neue',sans-serif; font-size:.95rem; letter-spacing:.08em; margin-bottom:1rem; color:var(--soft); }
+.d-opts { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; margin-bottom:1.1rem; }
+.d-opt { border:1px solid var(--border); border-radius:4px; padding:.9rem; text-align:center; cursor:pointer; transition:all .2s; background:var(--card); }
+.d-opt.active { border-color:var(--gold); background:rgba(232,168,32,.06); }
+.d-opt .di { font-size:1.5rem; display:block; margin-bottom:.3rem; }
+.d-opt .dn { font-size:.78rem; font-weight:600; color:var(--white); }
+.d-opt .dp { font-size:.7rem; color:var(--gold); margin-top:.15rem; }
+.addr { width:100%; background:var(--card); border:1px solid var(--border); color:var(--white); border-radius:4px; padding:.7rem 1rem; font-family:'Outfit',sans-serif; font-size:.86rem; transition:border-color .2s; }
+.addr:focus { outline:none; border-color:var(--gold); }
+.addr::placeholder { color:#555; }
+.d-foot { padding:1.4rem 2rem; border-top:1px solid var(--border); flex-shrink:0; }
+.t-row { display:flex; justify-content:space-between; font-size:.86rem; padding:.35rem 0; color:var(--gray); }
+.t-grand { font-family:'Bebas Neue',sans-serif; font-size:1.35rem; letter-spacing:.04em; color:var(--white); border-top:1px solid var(--border); padding-top:.9rem; margin-top:.4rem; }
+.t-grand span:last-child { color:var(--gold); }
+.pay-btn { width:100%; background:var(--gold); color:var(--black); border:none; border-radius:4px; padding:1.05rem; font-family:'Outfit',sans-serif; font-weight:700; font-size:.88rem; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:.6rem; transition:background .2s; margin:1rem 0 .7rem; }
+.pay-btn:hover { background:var(--gold-light); }
+.wa-btn-d { width:100%; background:transparent; color:var(--green); border:1px solid rgba(37,211,102,.3); border-radius:4px; padding:.85rem; font-family:'Outfit',sans-serif; font-weight:600; font-size:.8rem; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:.6rem; transition:all .2s; text-decoration:none; }
+.wa-btn-d:hover { background:rgba(37,211,102,.08); border-color:var(--green); }
+
+/* ── FOOTER ── */
+footer { background:var(--black); border-top:1px solid var(--border); padding:3rem 5%; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1.5rem; }
+.f-logo .l1 { font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:.1em; }
+.f-logo .l2 { font-family:'Dancing Script',cursive; font-size:1.3rem; color:var(--gold); display:block; line-height:.9; }
+footer p { font-size:.76rem; color:var(--gray); line-height:1.8; }
+footer a { color:var(--gold); text-decoration:none; }
+footer a:hover { text-decoration:underline; }
+
+/* TOAST */
+.toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%) translateY(80px); background:var(--card); border:1px solid var(--gold); color:var(--white); padding:.8rem 2rem; border-radius:4px; font-size:.86rem; font-weight:500; z-index:9999; transition:transform .35s cubic-bezier(.34,1.56,.64,1); box-shadow:0 8px 30px rgba(0,0,0,.6); white-space:nowrap; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+.tg { color:var(--gold); font-weight:700; }
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .hero-split { grid-template-columns:1fr; }
+  .hero-pane.pasteleria { border-right:none; border-bottom:1px solid var(--border); }
+  .feats { grid-template-columns:1fr 1fr; }
+  .feat:nth-child(2){ border-right:none; }
+  nav .wa-nav { display:none; }
+}
+@media(max-width:600px){
+  .mode-toggle { display:none; }
+  .feats { grid-template-columns:1fr; }
+  .feat { border-right:none; }
+  .drawer { width:100vw; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="scrollToTop()">
+    <span class="l1">DULCES</span>
+    <span class="l2">Antojos</span>
+  </div>
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="btnPasteleria" onclick="switchMode('pasteleria')">🎂 Pastelería</button>
+    <button class="mode-btn" id="btnShop" onclick="switchMode('shop')">📦 Shop Cajas</button>
+  </div>
+  <div class="nav-right">
+    <a class="wa-nav" href="https://wa.me/56912345678?text=Hola!%20Quiero%20consultar%20sobre%20Dulces%20Antojos%20🎂" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      WhatsApp
+    </a>
+    <button class="cart-btn" onclick="openCart()">🛒 <span class="cart-badge" id="cartCount">0</span></button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero-split" id="heroSplit">
+  <div class="hero-pane pasteleria" onclick="switchMode('pasteleria')">
+    <div class="pane-tag">Pastelería · Desde 2015</div>
+    <div class="pane-icon">🎂</div>
+    <div class="pane-title">
+      <span class="big">DULCES</span>
+      <span class="script">Antojos</span>
+    </div>
+    <p class="pane-desc">Tortas, cheesecakes y postres artesanales preparados con amor. Despacho en Santiago o retiro en tienda.</p>
+    <button class="pane-cta" onclick="event.stopPropagation();switchMode('pasteleria');scrollToCatalog()">Ver tortas y postres →</button>
+  </div>
+  <div class="hero-pane shop" onclick="switchMode('shop')">
+    <div class="pane-tag">Shop · Packaging Artesanal</div>
+    <div class="pane-icon">📦</div>
+    <div class="pane-title">
+      <span class="big">SHOP</span>
+      <span class="script">Cajas</span>
+    </div>
+    <p class="pane-desc">Cajas de torta premium para reposteras y pastelerías. Diferentes tamaños y estilos. Venta por unidad y mayor.</p>
+    <button class="pane-cta outline" onclick="event.stopPropagation();switchMode('shop');scrollToCatalog()">Ver cajas →</button>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-bar">
+  <div class="marquee-track" id="marquee"></div>
+</div>
+
+<!-- CATÁLOGO PASTELERÍA -->
+<section class="catalog-section" id="secPasteleria">
+  <div class="sec-header">
+    <div>
+      <div class="sec-label">Pastelería artesanal</div>
+      <h2 class="sec-title">TORTAS & <em>Postres</em></h2>
+    </div>
+    <div class="filters" id="filtersPasteleria"></div>
+  </div>
+  <div class="products-grid" id="gridPasteleria"></div>
+</section>
+
+<!-- CATÁLOGO SHOP -->
+<section class="catalog-section hidden" id="secShop">
+  <div class="sec-header">
+    <div>
+      <div class="sec-label">Dulces Antojos Shop</div>
+      <h2 class="sec-title">CAJAS <em>Premium</em></h2>
+    </div>
+    <div class="filters" id="filtersShop"></div>
+  </div>
+  <div class="box-note">
+    <span>📦</span>
+    <div><strong>Venta por unidad y al por mayor.</strong> Todas nuestras cajas son de calidad premium para pastelerías y reposteras. ¿Necesitas un volumen especial? <a href="https://wa.me/56912345678?text=Hola!%20Quiero%20cotizar%20cajas%20al%20por%20mayor%20🎂" target="_blank" style="color:var(--gold)">Cotiza por WhatsApp</a>.</div>
+  </div>
+  <div class="products-grid" id="gridShop"></div>
+</section>
+
+<!-- FEATURES -->
+<div class="feats">
+  <div class="feat"><span class="fi">🛵</span><div><h4>Despacho a domicilio</h4><p>Santiago mismo día. Costo fijo $2.990</p></div></div>
+  <div class="feat"><span class="fi">🏪</span><div><h4>Retiro en tienda</h4><p>Sin costo. Coordina por WhatsApp</p></div></div>
+  <div class="feat"><span class="fi">💳</span><div><h4>Mercado Pago</h4><p>Tarjeta, débito o transferencia</p></div></div>
+  <div class="feat"><span class="fi">📦</span><div><h4>Venta al por mayor</h4><p>Descuentos especiales para reposteras</p></div></div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="f-logo">
+    <span class="l1">DULCES</span>
+    <span class="l2">Antojos</span>
+    <p style="margin-top:.4rem;font-size:.7rem;">Pastelería & Shop · Santiago · Desde 2015</p>
+  </div>
+  <p>dulcesantojos.cl · Santiago, Chile<br>
+    <a href="https://wa.me/56912345678">+56 9 1234 5678</a> ·
+    <a href="https://instagram.com/dulcesantojos_cl">@dulcesantojos_cl</a> ·
+    <a href="https://instagram.com/dulcesantojosshop">@dulcesantojosshop</a>
+  </p>
+</footer>
+
+<!-- CART OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeOvl(event)">
+  <div class="drawer" id="drawer">
+    <div class="d-head">
+      <div class="d-title">MI <span>PEDIDO</span></div>
+      <button class="d-close" onclick="closeCart()">✕</button>
+    </div>
+    <div class="d-body" id="dBody"></div>
+    <div class="d-foot" id="dFoot" style="display:none"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──
+const pasteleria = [
+  {id:1,cat:'Tortas',name:'Torta Chocolate',emoji:'🎂',desc:'Húmeda y densa con ganache artesanal. Rellena de chantilly y berries.',price:24990,unit:'caja',stock:6,hi:'Más pedida'},
+  {id:2,cat:'Tortas',name:'Torta Red Velvet',emoji:'🍰',desc:'Terciopelo rojo con frosting de queso crema. Textura irresistible.',price:26990,unit:'caja',stock:4,hi:null},
+  {id:3,cat:'Tortas',name:'Torta Tres Leches',emoji:'🍮',desc:'Empapada en tres tipos de leche. Cubierta con crema y canela.',price:22990,unit:'caja',stock:5,hi:null},
+  {id:4,cat:'Cheesecake',name:'Cheesecake Frutilla',emoji:'🍓',desc:'Base de galleta, cremosa y fresca. Coulis de frutilla hecho en casa.',price:18990,unit:'caja',stock:3,hi:'Temporada'},
+  {id:5,cat:'Cheesecake',name:'Cheesecake Maracuyá',emoji:'🌕',desc:'Exótico y equilibrado. El toque tropical para tu mesa.',price:19990,unit:'caja',stock:0,hi:null},
+  {id:6,cat:'Brownies',name:'Box Brownies Nuez',emoji:'🍫',desc:'8 brownies fudgy con nueces tostadas y chips de chocolate belga.',price:9990,unit:'caja x8',stock:12,hi:null},
+  {id:7,cat:'Cupcakes',name:'Box Cupcakes Vainilla',emoji:'🧁',desc:'6 cupcakes con frosting de mantequilla, decorados a mano.',price:8990,unit:'caja x6',stock:8,hi:null},
+  {id:8,cat:'Cupcakes',name:'Box Cupcakes Oreo',emoji:'🤎',desc:'Bizcocho de chocolate con frosting de oreo y galleta encima.',price:9490,unit:'caja x6',stock:6,hi:'Nuevo'},
+  {id:9,cat:'Postres',name:'Pie de Limón',emoji:'🍋',desc:'Lemon curd sedoso con merengue italiano tostado. Tamaño familiar.',price:16990,unit:'caja',stock:4,hi:null},
+];
+
+const shop = [
+  {id:101,cat:'Cartón',name:'Caja Torta Negra 20cm',emoji:'⬛',desc:'Caja cartón premium color negro mate. 20x20x15 cm. Ideal para tortas de 4 porciones.',price:1990,unit:'c/u',stock:50,hi:'Premium'},
+  {id:102,cat:'Cartón',name:'Caja Torta Negra 25cm',emoji:'⬛',desc:'Caja cartón premium color negro mate. 25x25x15 cm. Para tortas medianas.',price:2490,unit:'c/u',stock:40,hi:null},
+  {id:103,cat:'Cartón',name:'Caja Torta Negra 30cm',emoji:'⬛',desc:'Caja cartón premium color negro mate. 30x30x18 cm. Tortas grandes.',price:2990,unit:'c/u',stock:30,hi:null},
+  {id:104,cat:'Con visor',name:'Caja con Visor 20cm',emoji:'🪟',desc:'Caja cartón con tapa de acetato transparente. 20x20x15 cm. Perfecta para exhibir.',price:2490,unit:'c/u',stock:25,hi:'Más pedida'},
+  {id:105,cat:'Con visor',name:'Caja con Visor 25cm',emoji:'🪟',desc:'Caja cartón con visor acetato. 25x25x15 cm. Ideal para regalos.',price:2990,unit:'c/u',stock:20,hi:null},
+  {id:106,cat:'Con visor',name:'Caja con Visor 30cm',emoji:'🪟',desc:'Caja cartón con visor acetato. 30x30x18 cm. Tortas grandes premium.',price:3490,unit:'c/u',stock:15,hi:null},
+  {id:107,cat:'Acetato',name:'Caja Acetato 15cm',emoji:'🔲',desc:'Completamente transparente. 15x15x15 cm. Perfecta para mostrar el producto.',price:1790,unit:'c/u',stock:35,hi:null},
+  {id:108,cat:'Acetato',name:'Caja Acetato 20cm',emoji:'🔲',desc:'Completamente transparente. 20x20x20 cm. Tortas enteras visibles.',price:2290,unit:'c/u',stock:28,hi:null},
+  {id:109,cat:'Pack',name:'Pack 10 Cajas Negras 20',emoji:'📦',desc:'10 cajas cartón negro mate 20cm. Precio mayorista. Ahorra un 20%.',price:17990,unit:'pack x10',stock:10,hi:'Mayorista'},
+  {id:110,cat:'Pack',name:'Pack 10 Cajas con Visor',emoji:'📦',desc:'10 cajas con visor 20cm. Precio especial para reposteras. Ahorra 18%.',price:21990,unit:'pack x10',stock:8,hi:'Mayorista'},
+];
+
+let cart = {};
+let deliveryType = 'despacho';
+let activeMode = 'pasteleria';
+let filters = { pasteleria: 'Todos', shop: 'Todos' };
+
+// Marquee
+const mItems = ['Tortas Artesanales','Cheesecakes','Brownies','Cupcakes','Postres','Cajas Premium','Packaging Repostería','Venta por Mayor','Despacho Santiago','Mercado Pago'];
+const mt = document.getElementById('marquee');
+const rep = [...mItems,...mItems,...mItems,...mItems];
+mt.innerHTML = rep.map(t=>`<span>✦ ${t}</span>`).join('');
+
+function scrollToTop(){ window.scrollTo({top:0,behavior:'smooth'}); }
+function scrollToCatalog(){ document.getElementById('secPasteleria').scrollIntoView({behavior:'smooth',block:'start'}); }
+
+function switchMode(mode){
+  activeMode = mode;
+  document.getElementById('btnPasteleria').classList.toggle('active', mode==='pasteleria');
+  document.getElementById('btnShop').classList.toggle('active', mode==='shop');
+  document.getElementById('secPasteleria').classList.toggle('hidden', mode!=='pasteleria');
+  document.getElementById('secShop').classList.toggle('hidden', mode!=='shop');
+  document.getElementById('secPasteleria').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function buildFilters(data, containerId, mode){
+  const cats = ['Todos',...new Set(data.map(p=>p.cat))];
+  const el = document.getElementById(containerId);
+  el.innerHTML = cats.map(c=>`<button class="f-btn ${c===filters[mode]?'active':''}" onclick="filterCat('${c}','${mode}')">${c}</button>`).join('');
+}
+
+function filterCat(cat, mode){
+  filters[mode] = cat;
+  if(mode==='pasteleria') renderGrid(pasteleria,'gridPasteleria','filtersPasteleria','pasteleria');
+  else renderGrid(shop,'gridShop','filtersShop','shop');
+}
+
+function fmt(n){ return '$'+n.toLocaleString('es-CL'); }
+
+function renderGrid(data, gridId, filtersId, mode){
+  buildFilters(data, filtersId, mode);
+  const filt = filters[mode]==='Todos' ? data : data.filter(p=>p.cat===filters[mode]);
+  document.getElementById(gridId).innerHTML = filt.map(p=>{
+    const q = cart[p.id]?.qty||0;
+    const sc = p.stock===0?'s-out':p.stock<=5?'s-low':'s-ok';
+    const sl = p.stock===0?'Sin stock':p.stock<=5?`Últimas ${p.stock}`:'Disponible';
+    return `<div class="p-card">
+      <div class="p-img">
+        <div class="p-emoji">${p.emoji}</div>
+        <span class="stock-tag ${sc}">${sl}</span>
+        ${p.hi?`<span class="hi-tag">${p.hi}</span>`:''}
+      </div>
+      <div class="p-body">
+        <div class="p-cat">${p.cat}</div>
+        <div class="p-name">${p.name}</div>
+        <div class="p-desc">${p.desc}</div>
+        <div class="p-foot">
+          <div class="price-box">
+            <div class="lbl">Precio</div>
+            <div class="price">${fmt(p.price)}</div>
+            <div class="unit">por ${p.unit}</div>
+          </div>
+          <div class="qty-wrap">
+            <button class="q-btn" onclick="changeQty(${p.id},-1)">−</button>
+            <span class="q-num" id="qty-${p.id}">${q}</span>
+            <button class="q-btn" onclick="changeQty(${p.id},1)" ${p.stock===0?'disabled':''}>+</button>
+          </div>
+        </div>
+        <button class="add-btn" onclick="addCart(${p.id})" ${p.stock===0?'disabled':''}>
+          ${p.stock===0?'Sin stock disponible':'+ Agregar al pedido'}
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+const allProducts = [...pasteleria,...shop];
+function getP(id){ return allProducts.find(p=>p.id===id); }
+
+function changeQty(id,d){
+  const p=getP(id); if(!p) return;
+  const cur=cart[id]?.qty||0;
+  const nxt=Math.max(0,Math.min(cur+d,p.stock));
+  if(nxt===0) delete cart[id]; else cart[id]={...p,qty:nxt};
+  const el=document.getElementById('qty-'+id); if(el) el.textContent=nxt;
+  updateCount();
+}
+
+function addCart(id){
+  const p=getP(id); if(!p||p.stock===0) return;
+  if(!cart[id]) cart[id]={...p,qty:0};
+  if(cart[id].qty<p.stock){
+    cart[id].qty++;
+    const el=document.getElementById('qty-'+id); if(el) el.textContent=cart[id].qty;
+    updateCount();
+    showToast(`<span class="tg">${p.emoji} ${p.name}</span> agregado`);
+  }
+}
+
+function updateCount(){ document.getElementById('cartCount').textContent=Object.values(cart).reduce((s,i)=>s+i.qty,0); }
+
+function openCart(){ document.getElementById('overlay').classList.add('open'); renderCart(); }
+function closeCart(){ document.getElementById('overlay').classList.remove('open'); }
+function closeOvl(e){ if(e.target.id==='overlay') closeCart(); }
+
+function renderCart(){
+  const items=Object.values(cart);
+  const body=document.getElementById('dBody');
+  const foot=document.getElementById('dFoot');
+  if(!items.length){
+    body.innerHTML=`<div class="empty"><span class="ei">🛒</span><p>Tu pedido está vacío.<br>¡Elige algo delicioso!</p></div>`;
+    foot.style.display='none'; return;
+  }
+  body.innerHTML = items.map(i=>`
+    <div class="c-item">
+      <span class="c-em">${i.emoji}</span>
+      <div class="c-info">
+        <div class="c-name">${i.name}</div>
+        <div class="c-price">${fmt(i.price*i.qty)}</div>
+      </div>
+      <div class="c-qty">
+        <button class="q-btn" onclick="changeQty(${i.id},-1);renderCart()">−</button>
+        <span style="font-weight:700;min-width:20px;text-align:center">${i.qty}</span>
+        <button class="q-btn" onclick="changeQty(${i.id},1);renderCart()">+</button>
+      </div>
+    </div>`).join('') + `
+  <div class="del-block">
+    <h3>¿CÓMO LO RECIBE?</h3>
+    <div class="d-opts">
+      <div class="d-opt ${deliveryType==='despacho'?'active':''}" onclick="setDel('despacho')">
+        <span class="di">🛵</span><div class="dn">Despacho</div><div class="dp">+$2.990</div>
+      </div>
+      <div class="d-opt ${deliveryType==='retiro'?'active':''}" onclick="setDel('retiro')">
+        <span class="di">🏪</span><div class="dn">Retiro</div><div class="dp">Gratis</div>
+      </div>
+    </div>
+    ${deliveryType==='despacho'?'<input class="addr" type="text" placeholder="Dirección, número, comuna..." id="addrIn">':'<p style="font-size:.78rem;color:var(--gray)">Coordina el horario por WhatsApp.</p>'}
+  </div>`;
+
+  const sub=items.reduce((s,i)=>s+i.price*i.qty,0);
+  const del=deliveryType==='despacho'?2990:0;
+  const total=sub+del;
+  const msg=encodeURIComponent('🎂 *Hola Dulces Antojos!* Quiero hacer un pedido:\n\n'+items.map(i=>`• ${i.name} x${i.qty} — ${fmt(i.price*i.qty)}`).join('\n')+`\n\n*Total:* ${fmt(total)}\n*Entrega:* ${deliveryType==='despacho'?'Despacho':'Retiro en tienda'}`);
+
+  foot.innerHTML=`
+    <div class="t-row"><span>Subtotal</span><span>${fmt(sub)}</span></div>
+    <div class="t-row"><span>Despacho</span><span>${del?fmt(del):'Gratis'}</span></div>
+    <div class="t-row t-grand"><span>TOTAL</span><span>${fmt(total)}</span></div>
+    <button class="pay-btn" onclick="checkout()">💳 Pagar con Mercado Pago</button>
+    <a class="wa-btn-d" href="https://wa.me/56912345678?text=${msg}" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Consultar por WhatsApp
+    </a>`;
+  foot.style.display='block';
+}
+
+function setDel(t){ deliveryType=t; renderCart(); }
+function checkout(){ showToast('Conectando con <span class="tg">Mercado Pago</span>...'); }
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.innerHTML=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// Init
+renderGrid(pasteleria,'gridPasteleria','filtersPasteleria','pasteleria');
+renderGrid(shop,'gridShop','filtersShop','shop');
+</script>
+</body>
+</html>
