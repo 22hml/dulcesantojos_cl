@@ -6,19 +6,10 @@ const get = (k) => {
   return m ? m[1].trim().replace(/^["']|["']$/g, "") : "";
 };
 
-function mpAppId(credential) {
-  const parts = credential.trim().split("-");
-  if (parts[0] !== "APP_USR" || !parts[1]) return null;
-  return parts[1];
-}
-
 const token = get("MP_ACCESS_TOKEN");
 const pub = get("NEXT_PUBLIC_MP_PUBLIC_KEY");
 const prefId =
   process.argv[2] || "3034480589-b6a1f5a6-45da-4edf-91d7-8cc9a079f2d7";
-
-const tokenApp = token ? mpAppId(token) : null;
-const pubApp = pub ? mpAppId(pub) : null;
 
 console.log("=== Credenciales ===");
 console.log(
@@ -29,36 +20,33 @@ console.log(
   "PUBLIC_KEY:",
   pub ? `${pub.slice(0, 15)}... len=${pub.length}` : "FALTA"
 );
-console.log("ID aplicación (token):", tokenApp || "no detectado");
-console.log("ID aplicación (public key):", pubApp || "no detectado");
 console.log("MP_USE_SANDBOX:", get("MP_USE_SANDBOX") || "(no definido = producción)");
 console.log("APP_URL:", get("NEXT_PUBLIC_APP_URL"));
 
 console.log("\n=== Diagnóstico ===");
 let ok = true;
 
-if (tokenApp && pubApp && tokenApp !== pubApp) {
-  console.log(
-    "❌ CRÍTICO: Token y Public Key son de APPS DISTINTAS.",
-    `\n   Token → app ${tokenApp}`,
-    `\n   Public Key → app ${pubApp}`,
-    "\n   → Pantalla en blanco en checkout. Copia AMBAS credenciales",
-    "\n     desde la MISMA aplicación en mercadopago.cl/developers/panel/app",
-    "\n     → Credenciales de producción (misma pestaña)."
-  );
-  ok = false;
-} else if (tokenApp && pubApp) {
-  console.log("✅ Token y Public Key son de la misma aplicación:", tokenApp);
-}
+console.log(
+  "ℹ️  Public Key y Access Token SIEMPRE se ven distintos (es normal).",
+  "\n   Lo importante: copiar ambos de la MISMA pantalla",
+  "\n   Tus integraciones → tu app → Credenciales → Productivas."
+);
 
 if (pub && pub.length < 40) {
   console.log("❌ Public Key muy corta — puede estar incompleta");
   ok = false;
 }
 
-if (token && pub && token === pub) {
-  console.log("❌ Token y Public Key son el mismo valor — copiaste mal");
+if (token && token.length < 50) {
+  console.log("❌ Access Token muy corto — puede estar incompleto");
   ok = false;
+}
+
+if (token && pub && token === pub) {
+  console.log("❌ Pegaste el mismo valor en las dos variables");
+  ok = false;
+} else if (token && pub) {
+  console.log("✅ Son dos credenciales distintas (correcto)");
 }
 
 console.log("\n=== Preferencia ===");

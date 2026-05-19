@@ -1,28 +1,37 @@
-/** Segmento identificador tras APP_USR- (misma app → mismo valor). */
-export function mpCredentialAppId(credential: string): string | null {
-  const parts = credential.trim().split("-");
-  if (parts[0] !== "APP_USR" || !parts[1]) return null;
-  return parts[1];
-}
-
+/** Validaciones básicas de credenciales MP (no comparan prefijos: siempre son distintos). */
 export function validateMpCredentialPair(): void {
   const token = process.env.MP_ACCESS_TOKEN?.trim() || "";
   const publicKey = process.env.NEXT_PUBLIC_MP_PUBLIC_KEY?.trim() || "";
 
   if (!token || !publicKey) return;
 
-  if (publicKey.length < 40) {
+  if (!token.startsWith("APP_USR-") && !token.startsWith("TEST-")) {
     throw new Error(
-      `NEXT_PUBLIC_MP_PUBLIC_KEY parece incompleta (${publicKey.length} caracteres). Copia la Public Key completa de producción.`
+      "MP_ACCESS_TOKEN no parece de Mercado Pago (debe empezar con APP_USR- o TEST-)."
     );
   }
 
-  const tokenApp = mpCredentialAppId(token);
-  const pubApp = mpCredentialAppId(publicKey);
-
-  if (tokenApp && pubApp && tokenApp !== pubApp) {
+  if (!publicKey.startsWith("APP_USR-") && !publicKey.startsWith("TEST-")) {
     throw new Error(
-      `Credenciales de Mercado Pago de aplicaciones distintas (token app ${tokenApp} vs public key app ${pubApp}). Copia ambas desde la misma app: Tus integraciones → Credenciales de producción.`
+      "NEXT_PUBLIC_MP_PUBLIC_KEY no parece de Mercado Pago (debe empezar con APP_USR-)."
+    );
+  }
+
+  if (token === publicKey) {
+    throw new Error(
+      "MP_ACCESS_TOKEN y NEXT_PUBLIC_MP_PUBLIC_KEY no pueden ser el mismo valor. Copia la Public Key en una variable y el Access Token en la otra."
+    );
+  }
+
+  if (token.length < 50) {
+    throw new Error(
+      `MP_ACCESS_TOKEN parece incompleto (${token.length} caracteres). Copia el Access Token completo.`
+    );
+  }
+
+  if (publicKey.length < 40) {
+    throw new Error(
+      `NEXT_PUBLIC_MP_PUBLIC_KEY parece incompleta (${publicKey.length} caracteres). Copia la Public Key completa.`
     );
   }
 }
