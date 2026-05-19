@@ -101,33 +101,18 @@ export default function CartDrawer() {
         throw new Error(msg || "Error al iniciar el pago");
       }
 
-      const sandbox =
-        process.env.NEXT_PUBLIC_MP_USE_SANDBOX === "true" ||
-        process.env.NEXT_PUBLIC_MP_USE_SANDBOX === "1";
+      const checkoutUrl =
+        data.checkout_url ||
+        data.init_point ||
+        data.sandbox_init_point;
 
-      // Producción: ir directo al init_point (evita pantalla en blanco del Wallet → payment/redirect)
-      if (!sandbox && data.checkout_url) {
+      if (checkoutUrl) {
         clearCart();
-        window.location.href = data.checkout_url;
-      } else if (data.preference_id) {
-        clearCart();
-        const q = new URLSearchParams({ pref_id: data.preference_id });
-        if (data.checkout_url) q.set("url", data.checkout_url);
-        window.location.href = `/pagar?${q.toString()}`;
-      } else if (data.checkout_url || data.sandbox_init_point || data.init_point) {
-        clearCart();
-        const checkoutUrl = sandbox
-          ? data.sandbox_init_point ||
-            data.checkout_url ||
-            data.init_point
-          : data.init_point ||
-            data.checkout_url ||
-            data.sandbox_init_point;
         window.location.href = checkoutUrl;
       } else {
         throw new Error(
           data.hint ||
-            "Mercado Pago no devolvió URL de pago. Revisa MP_ACCESS_TOKEN en .env.local."
+            "Mercado Pago no devolvió URL de pago. Revisa MP_ACCESS_TOKEN en Vercel."
         );
       }
     } catch (e) {

@@ -66,6 +66,13 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+  IF EXISTS (
+    SELECT 1 FROM orders
+    WHERE mp_payment_id = p_payment_id AND status = 'paid'
+  ) THEN
+    RETURN;
+  END IF;
+
   UPDATE orders
   SET status = 'paid', mp_payment_id = p_payment_id
   WHERE id = p_order_id AND status = 'pending';

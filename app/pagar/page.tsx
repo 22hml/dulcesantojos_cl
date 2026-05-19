@@ -1,16 +1,12 @@
-import { Suspense } from "react";
-import PagarContent from "./PagarContent";
+import { redirect } from "next/navigation";
 
-export default function PagarPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-theme">
-          <p className="font-outfit text-theme-muted">Cargando pago…</p>
-        </div>
-      }
-    >
-      <PagarContent />
-    </Suspense>
-  );
+type Props = { searchParams: { url?: string } };
+
+/** Compatibilidad: redirige al init_point si llegan con ?url= */
+export default function PagarPage({ searchParams }: Props) {
+  const url = searchParams.url?.trim();
+  if (url && url.startsWith("https://")) {
+    redirect(url);
+  }
+  redirect("/");
 }

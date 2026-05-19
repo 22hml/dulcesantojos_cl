@@ -1,43 +1,45 @@
-import { serviceRpc } from "@/lib/supabase-service";
+import {
+  confirmOrderFromPayment,
+} from "@/lib/mp-order";
+import {
+  extractPaymentIdFromWebhook,
+  verifyMpWebhookSignature,
+} from "@/lib/mp-payment";
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
+async function handleNotification(req: Request): Promise<Response> {
+  let body: { type?: string; data?: { id?: string | number }; action?: string } =
+    {};
 
-    if (body.type !== "payment" || !body.data?.id) {
+  if (req.method === "POST") {
+    try {
+      body = await req.json();
+    } catch {
       return new Response("OK", { status: 200 });
     }
+  }
 
-    const paymentId = body.data.id;
-    const res = await fetch(
-      `https://api.mercadopago.com/v1/payments/${paymentId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
-        },
-      }
-    );
-
-    if (!res.ok) {
-      return new Response("OK", { status: 200 });
-    }
-
-    const payment = await res.json();
-
-    if (payment.status === "approved" && payment.external_reference) {
-      try {
-        await serviceRpc("mark_order_paid", {
-          p_order_id: Number(payment.external_reference),
-          p_payment_id: String(paymentId),
-        });
-      } catch (e) {
-        console.error("mark_order_paid:", e);
-      }
-    }
-
-    return new Response("OK", { status: 200 });
-  } catch (err) {
-    console.error("Webhook error:", err);
+  const paymentId = extractPaymentIdFromWebhook(req, body);
+  if (!paymentId) {
     return new Response("OK", { status: 200 });
   }
+
+  if (!verifyMpWebhookSignature(req, paymentId)) {
+    console.error("Webhook MP: firma inválida", paymentId);
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const result = await confirmOrderFromPayment(paymentId);
+  if (result.ok && result.orderId) {
+    console.log("Pedido pagado:", result.orderId, "pago:", paymentId);
+  }
+
+  return new Response("OK", { status: 200 });
+}
+
+export async function GET(req: Request) {
+  return handleNotification(req);
+}
+
+export async function POST(req: Request) {
+  return handleNotification(req);
 }
