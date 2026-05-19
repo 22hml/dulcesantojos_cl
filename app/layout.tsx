@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CartProvider } from "@/context/CartContext";
 import { ShopModeProvider } from "@/context/ShopModeContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,11 +16,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body className="font-outfit antialiased bg-black text-white">
-        <ShopModeProvider>
-          <CartProvider>{children}</CartProvider>
-        </ShopModeProvider>
+    <html lang="es" data-theme="dark" suppressHydrationWarning>
+      <body className="font-outfit antialiased bg-theme-base text-theme">
+        <ThemeProvider>
+          <ShopModeProvider>
+            <CartProvider>{children}</CartProvider>
+          </ShopModeProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

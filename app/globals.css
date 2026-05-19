@@ -4,21 +4,49 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --black: #0d0d0d;
-  --dark: #141414;
-  --card: #1a1a1a;
-  --card2: #1e1e1e;
+/* ── Dark (default) ── */
+:root,
+[data-theme="dark"] {
+  --bg-base: #0d0d0d;
+  --bg-nav: rgba(13, 13, 13, 0.97);
+  --bg-elevated: #141414;
+  --bg-card: #1a1a1a;
+  --bg-card-hover: #1e1e1e;
+  --bg-input: #1a1a1a;
   --border: #2a2a2a;
   --gold: #e8a820;
   --gold-light: #f5c84a;
   --gold-dark: #b8851a;
-  --white: #ffffff;
-  --gray: #888888;
-  --soft: #cccccc;
-  --green: #25d366;
-  --background: var(--black);
-  --foreground: var(--white);
+  --text-primary: #ffffff;
+  --text-muted: #888888;
+  --text-soft: #cccccc;
+  --overlay: rgba(0, 0, 0, 0.8);
+  --img-gradient-from: #1c1c1c;
+  --img-gradient-to: #222222;
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+}
+
+/* ── Light ── */
+[data-theme="light"] {
+  --bg-base: #f5f2ec;
+  --bg-nav: rgba(245, 242, 236, 0.97);
+  --bg-elevated: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #faf8f4;
+  --bg-input: #ffffff;
+  --border: #e5dfd4;
+  --gold: #c8920f;
+  --gold-light: #e8a820;
+  --gold-dark: #9a6f0c;
+  --text-primary: #1a1a1a;
+  --text-muted: #666666;
+  --text-soft: #444444;
+  --overlay: rgba(0, 0, 0, 0.45);
+  --img-gradient-from: #f0ebe3;
+  --img-gradient-to: #e8e0d4;
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
 }
 
 html {
@@ -35,7 +63,7 @@ body {
   width: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--dark);
+  background: var(--bg-elevated);
 }
 ::-webkit-scrollbar-thumb {
   background: var(--gold-dark);
@@ -51,6 +79,33 @@ body {
   }
   .font-outfit {
     font-family: "Outfit", sans-serif;
+  }
+  .bg-theme-base {
+    background-color: var(--bg-base);
+  }
+  .bg-theme-nav {
+    background-color: var(--bg-nav);
+  }
+  .bg-theme-card {
+    background-color: var(--bg-card);
+  }
+  .bg-theme-elevated {
+    background-color: var(--bg-elevated);
+  }
+  .bg-theme-input {
+    background-color: var(--bg-input);
+  }
+  .text-theme {
+    color: var(--text-primary);
+  }
+  .text-theme-muted {
+    color: var(--text-muted);
+  }
+  .text-theme-soft {
+    color: var(--text-soft);
+  }
+  .border-theme {
+    border-color: var(--border);
   }
 }
 
@@ -76,4 +131,19 @@ body {
     transform: translateX(0);
     opacity: 1;
   }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease;
 }

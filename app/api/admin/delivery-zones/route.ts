@@ -8,11 +8,9 @@ export async function GET() {
   }
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from("products")
+    .from("delivery_zones")
     .select("*")
-    .order("mode")
-    .order("category")
-    .order("name");
+    .order("comuna");
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -27,17 +25,11 @@ export async function POST(req: Request) {
   const body = await req.json();
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from("products")
+    .from("delivery_zones")
     .insert({
-      name: body.name,
-      description: body.description || null,
-      price: Number(body.price),
-      unit: body.unit || "unidad",
-      stock: Number(body.stock) || 0,
-      category: body.category || null,
-      mode: body.mode || "pasteleria",
-      highlight: body.highlight || null,
-      image_url: body.image_url || null,
+      comuna: body.comuna,
+      region: body.region || "Región Metropolitana",
+      delivery_cost: Number(body.delivery_cost),
       active: body.active !== false,
     })
     .select()
@@ -56,7 +48,7 @@ export async function PATCH(req: Request) {
   const { id, ...fields } = await req.json();
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from("products")
+    .from("delivery_zones")
     .update(fields)
     .eq("id", id)
     .select()
@@ -74,7 +66,10 @@ export async function DELETE(req: Request) {
   }
   const { id } = await req.json();
   const supabase = createAdminClient();
-  const { error } = await supabase.from("products").delete().eq("id", id);
+  const { error } = await supabase
+    .from("delivery_zones")
+    .delete()
+    .eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

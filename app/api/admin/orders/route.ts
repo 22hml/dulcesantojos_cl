@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { isAdminSession } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase-admin";
 
-function isAdmin() {
-  return cookies().get("admin_session")?.value === "1";
-}
-
 export async function GET() {
-  if (!isAdmin()) {
+  if (!isAdminSession()) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
   const supabase = createAdminClient();
@@ -24,7 +20,7 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  if (!isAdmin()) {
+  if (!isAdminSession()) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
   const { id, status } = await req.json();

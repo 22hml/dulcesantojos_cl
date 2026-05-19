@@ -9,6 +9,11 @@ import {
 } from "react";
 import type { Cart, CartItem, Product } from "@/types";
 
+type AddedModal = {
+  product: Product;
+  qty: number;
+};
+
 type CartContextValue = {
   cart: Cart;
   itemCount: number;
@@ -20,6 +25,8 @@ type CartContextValue = {
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
+  addedModal: AddedModal | null;
+  closeAddedModal: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -27,19 +34,26 @@ const CartContext = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<Cart>({});
   const [isOpen, setIsOpen] = useState(false);
+  const [addedModal, setAddedModal] = useState<AddedModal | null>(null);
 
   const addItem = useCallback(
     (product: Product, options?: { openDrawer?: boolean }) => {
       setCart((prev) => {
-        const existing = prev[product.id];
-        const nextQty = (existing?.qty ?? 0) + 1;
+        const nextQty = (prev[product.id]?.qty ?? 0) + 1;
         if (nextQty > product.stock) return prev;
+
+        if (options?.openDrawer === true) {
+          setAddedModal(null);
+          setIsOpen(true);
+        } else {
+          setAddedModal({ product, qty: nextQty });
+        }
+
         return {
           ...prev,
           [product.id]: { ...product, qty: nextQty },
         };
       });
-      if (options?.openDrawer !== false) setIsOpen(true);
     },
     []
   );
@@ -67,6 +81,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const clearCart = useCallback(() => setCart({}), []);
+  const closeAddedModal = useCallback(() => setAddedModal(null), []);
 
   const itemCount = useMemo(
     () => Object.values(cart).reduce((s, i) => s + i.qty, 0),
@@ -88,10 +103,26 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setQty,
       clearCart,
       isOpen,
-      openCart: () => setIsOpen(true),
+      openCart: () => {
+        setAddedModal(null);
+        setIsOpen(true);
+      },
       closeCart: () => setIsOpen(false),
+      addedModal,
+      closeAddedModal,
     }),
-    [cart, itemCount, subtotal, addItem, removeItem, setQty, clearCart, isOpen]
+    [
+      cart,
+      itemCount,
+      subtotal,
+      addItem,
+      removeItem,
+      setQty,
+      clearCart,
+      isOpen,
+      addedModal,
+      closeAddedModal,
+    ]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

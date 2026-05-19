@@ -31,7 +31,12 @@ export default function ProductCard({ product }: Props) {
 
   return (
     <article className="group cursor-pointer bg-card transition-colors hover:bg-card2">
-      <div className="relative flex h-[220px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#1C1C1C] to-[#222]">
+      <div
+        className="relative flex h-[180px] items-center justify-center overflow-hidden sm:h-[220px]"
+        style={{
+          background: `linear-gradient(145deg, var(--img-gradient-from), var(--img-gradient-to))`,
+        }}
+      >
         {product.image_url ? (
           <Image
             src={product.image_url}
@@ -61,7 +66,7 @@ export default function ProductCard({ product }: Props) {
         <p className="mb-1.5 text-[0.65rem] font-medium uppercase tracking-[0.15em] text-gold-dark">
           {product.category}
         </p>
-        <h3 className="font-bebas text-[1.45rem] leading-none tracking-wide text-white">
+        <h3 className="font-bebas text-[1.45rem] leading-none tracking-wide text-theme">
           {product.name}
         </h3>
         {product.description && (
@@ -84,7 +89,7 @@ export default function ProductCard({ product }: Props) {
               type="button"
               onClick={() => changeQty(-1)}
               disabled={qty === 0}
-              className="flex h-[30px] w-[30px] items-center justify-center rounded-full border border-[#333] bg-border text-white transition hover:border-gold hover:bg-gold hover:text-black disabled:cursor-not-allowed disabled:opacity-30"
+              className="flex h-[30px] w-[30px] items-center justify-center rounded-full border border-theme bg-theme-card text-theme transition hover:border-gold hover:bg-gold hover:text-black disabled:cursor-not-allowed disabled:opacity-30"
             >
               −
             </button>
@@ -95,7 +100,7 @@ export default function ProductCard({ product }: Props) {
               type="button"
               onClick={() => changeQty(1)}
               disabled={outOfStock || qty >= product.stock}
-              className="flex h-[30px] w-[30px] items-center justify-center rounded-full border border-[#333] bg-border text-white transition hover:border-gold hover:bg-gold hover:text-black disabled:cursor-not-allowed disabled:opacity-30"
+              className="flex h-[30px] w-[30px] items-center justify-center rounded-full border border-theme bg-theme-card text-theme transition hover:border-gold hover:bg-gold hover:text-black disabled:cursor-not-allowed disabled:opacity-30"
             >
               +
             </button>
@@ -104,7 +109,7 @@ export default function ProductCard({ product }: Props) {
         <button
           type="button"
           disabled={outOfStock}
-          onClick={() => changeQty(1, true)}
+          onClick={() => changeQty(1)}
           className="mt-4 w-full rounded-sm border border-gold/30 bg-transparent py-3 font-outfit text-[0.78rem] font-semibold uppercase tracking-widest text-gold transition hover:border-gold hover:bg-gold hover:text-black disabled:cursor-not-allowed disabled:opacity-30"
         >
           {outOfStock ? "Sin stock disponible" : "+ Agregar al pedido"}

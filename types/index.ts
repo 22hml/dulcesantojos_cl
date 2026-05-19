@@ -23,6 +23,13 @@ export type OrderStatus =
   | "sent"
   | "done";
 
+export type DeliveryZone = {
+  id: number;
+  comuna: string;
+  region?: string;
+  delivery_cost: number;
+};
+
 export type Order = {
   id: number;
   mp_preference_id: string | null;
@@ -30,6 +37,7 @@ export type Order = {
   status: OrderStatus;
   delivery_type: "despacho" | "retiro";
   address: string | null;
+  comuna?: string | null;
   customer_name: string | null;
   customer_phone: string | null;
   subtotal: number;

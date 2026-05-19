@@ -6,7 +6,10 @@ export async function POST(req: Request) {
 
   if (!adminPassword) {
     return NextResponse.json(
-      { error: "ADMIN_PASSWORD no configurado" },
+      {
+        error:
+          "Falta ADMIN_PASSWORD en .env.local. Agrega: ADMIN_PASSWORD=tu_clave_secreta",
+      },
       { status: 500 }
     );
   }

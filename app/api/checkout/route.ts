@@ -1,26 +1,39 @@
 import { NextResponse } from "next/server";
-import { Preference } from "mercadopago";
-import { getMercadoPagoConfig } from "@/lib/mercadopago";
-import { createAdminClient } from "@/lib/supabase-admin";
+import {
+  createMercadoPagoPreference,
+  formatMpError,
+} from "@/lib/mercadopago-preference";
+import {
+  pickMpCheckoutUrl,
+  resolveMpBackBase,
+  shouldUseMpSandbox,
+} from "@/lib/mp-checkout-url";
+import { serviceInsertOrder, serviceRpc, serviceUpdateOrder } from "@/lib/supabase-service";
 import type { CartItem } from "@/types";
 
-const DELIVERY_COST = 2990;
-
 export async function POST(req: Request) {
+  let step = "inicio";
+
   try {
     const body = await req.json();
     const {
       cart,
       deliveryType,
       address,
+      comuna,
       customerName,
       customerPhone,
+      deliveryCost: clientDeliveryCost,
+      clientOrigin,
     } = body as {
       cart: Record<string, CartItem>;
       deliveryType: "despacho" | "retiro";
       address?: string;
+      comuna?: string;
       customerName?: string;
       customerPhone: string;
+      deliveryCost?: number;
+      clientOrigin?: string;
     };
 
     const items = Object.values(cart) as CartItem[];
@@ -37,12 +50,41 @@ export async function POST(req: Request) {
       }
     }
 
-    const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
-    const deliveryCost = deliveryType === "despacho" ? DELIVERY_COST : 0;
-    const total = subtotal + deliveryCost;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    let deliveryCost = 0;
+    let fullAddress: string | null = address || null;
 
-    const supabase = createAdminClient();
+    if (deliveryType === "despacho") {
+      if (!comuna?.trim() || !address?.trim()) {
+        return NextResponse.json(
+          { error: "Selecciona comuna e ingresa la dirección" },
+          { status: 400 }
+        );
+      }
+
+      step = "tarifa-comuna";
+      try {
+        const zones = await serviceRpc<{ delivery_cost: number }[]>(
+          "get_delivery_cost",
+          { p_comuna: comuna.trim() }
+        );
+        const cost = Array.isArray(zones) ? zones[0]?.delivery_cost : null;
+        if (typeof cost === "number") deliveryCost = cost;
+      } catch {
+        /* usa fallback */
+      }
+
+      if (!deliveryCost) {
+        deliveryCost =
+          typeof clientDeliveryCost === "number" ? clientDeliveryCost : 2990;
+      }
+      fullAddress = `${address.trim()}, ${comuna.trim()}`;
+    }
+
+    const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+    const total = subtotal + deliveryCost;
+    const useSandbox = shouldUseMpSandbox();
+    const backBase = resolveMpBackBase(req, clientOrigin, useSandbox);
+
     const orderItems = items.map((i) => ({
       id: i.id,
       name: i.name,
@@ -50,78 +92,123 @@ export async function POST(req: Request) {
       price: i.price,
     }));
 
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .insert({
+    step = "crear-pedido";
+    let orderId: number | null = null;
+
+    try {
+      orderId = await serviceRpc<number>("create_order_for_checkout", {
+        p_delivery_type: deliveryType,
+        p_address: fullAddress,
+        p_comuna: deliveryType === "despacho" ? comuna?.trim() : null,
+        p_customer_name: customerName || null,
+        p_customer_phone: customerPhone,
+        p_subtotal: subtotal,
+        p_delivery_cost: deliveryCost,
+        p_total: total,
+        p_items: orderItems,
+      });
+    } catch (rpcErr) {
+      console.warn("RPC create_order falló, insert directo:", rpcErr);
+      orderId = await serviceInsertOrder({
         status: "pending",
         delivery_type: deliveryType,
-        address: address || null,
+        address: fullAddress,
+        comuna: deliveryType === "despacho" ? comuna?.trim() : null,
         customer_name: customerName || null,
         customer_phone: customerPhone,
         subtotal,
         delivery_cost: deliveryCost,
         total,
         items: orderItems,
-      })
-      .select("id")
-      .single();
+      });
+    }
 
-    if (orderError || !order) {
-      console.error(orderError);
+    if (!orderId) {
       return NextResponse.json(
-        { error: "No se pudo crear el pedido" },
+        { error: "No se pudo crear el pedido en Supabase." },
         { status: 500 }
       );
     }
 
-    const mp = getMercadoPagoConfig();
-    const preference = await new Preference(mp).create({
-      body: {
-        external_reference: String(order.id),
-        items: [
-          ...items.map((i) => ({
-            id: String(i.id),
-            title: i.name,
-            quantity: i.qty,
-            unit_price: i.price,
-            currency_id: "CLP",
-          })),
-          ...(deliveryCost > 0
-            ? [
-                {
-                  id: "delivery",
-                  title: "Despacho a domicilio",
-                  quantity: 1,
-                  unit_price: deliveryCost,
-                  currency_id: "CLP",
-                },
-              ]
-            : []),
-        ],
-        back_urls: {
-          success: `${appUrl}/pedido/success`,
-          failure: `${appUrl}/pedido/failure`,
-          pending: `${appUrl}/pedido/pending`,
-        },
-        auto_return: "approved",
-        notification_url: `${appUrl}/api/webhook`,
-      },
+    step = "mercado-pago";
+    const mpItems = [
+      ...items.map((i) => ({
+        id: String(i.id),
+        title: i.name,
+        quantity: i.qty,
+        unit_price: Number(i.price),
+        currency_id: "CLP",
+      })),
+      ...(deliveryCost > 0
+        ? [
+            {
+              id: "delivery",
+              title: comuna ? `Despacho ${comuna}` : "Despacho a domicilio",
+              quantity: 1,
+              unit_price: Number(deliveryCost),
+              currency_id: "CLP",
+            },
+          ]
+        : []),
+    ];
+
+    const preference = await createMercadoPagoPreference({
+      orderId,
+      items: mpItems,
+      backBase,
+      useSandbox,
     });
 
-    await supabase
-      .from("orders")
-      .update({ mp_preference_id: preference.id })
-      .eq("id", order.id);
+    step = "guardar-preferencia";
+    try {
+      await serviceUpdateOrder(orderId, {
+        mp_preference_id: preference.id,
+      });
+    } catch (e) {
+      console.warn("No se guardó mp_preference_id (el pago igual funciona):", e);
+    }
+
+    const checkoutUrl = pickMpCheckoutUrl(preference, useSandbox);
+
+    if (!checkoutUrl) {
+      throw new Error(
+        "Mercado Pago no devolvió URL de pago. Revisa que MP_ACCESS_TOKEN sea de prueba (Credenciales de prueba)."
+      );
+    }
 
     return NextResponse.json({
+      preference_id: preference.id,
       init_point: preference.init_point,
       sandbox_init_point: preference.sandbox_init_point,
+      checkout_url: checkoutUrl,
+      use_sandbox: useSandbox,
     });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json(
-      { error: "Error al procesar el checkout" },
-      { status: 500 }
-    );
+    console.error(`checkout [${step}]:`, err);
+
+    const message = formatMpError(err);
+
+    if (step === "mercado-pago") {
+      return NextResponse.json(
+        {
+          error: `Mercado Pago: ${message}`,
+          hint: "Verifica MP_ACCESS_TOKEN (Credenciales de prueba, empieza con APP_USR-). El pedido ya puede estar en Supabase → orders.",
+          step,
+        },
+        { status: 500 }
+      );
+    }
+
+    if (step === "crear-pedido") {
+      return NextResponse.json(
+        {
+          error: `Supabase: ${message}`,
+          step,
+        },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ error: message, step }, { status: 500 });
   }
 }

@@ -16,7 +16,7 @@ export default function HeroSplit() {
   }
 
   return (
-    <section className="grid min-h-screen grid-cols-1 border-b border-border pt-[68px] lg:grid-cols-2">
+    <section className="grid min-h-[calc(100vh-7rem)] grid-cols-1 border-b border-border pt-[7.5rem] md:min-h-screen md:pt-[68px] lg:grid-cols-2">
       <div
         role="button"
         tabIndex={0}

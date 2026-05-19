@@ -5,6 +5,7 @@ import Catalog from "@/components/Catalog";
 import FeaturesBar from "@/components/FeaturesBar";
 import SiteFooter from "@/components/SiteFooter";
 import CartDrawer from "@/components/CartDrawer";
+import AddToCartModal from "@/components/AddToCartModal";
 
 export default function Home() {
   return (
@@ -18,6 +19,7 @@ export default function Home() {
       </main>
       <SiteFooter />
       <CartDrawer />
+      <AddToCartModal />
     </>
   );
 }

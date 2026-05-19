@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase-admin";
+import { serviceRpc } from "@/lib/supabase-service";
 
 export async function POST(req: Request) {
   try {
@@ -25,15 +25,14 @@ export async function POST(req: Request) {
     const payment = await res.json();
 
     if (payment.status === "approved" && payment.external_reference) {
-      const supabase = createAdminClient();
-      await supabase
-        .from("orders")
-        .update({
-          status: "paid",
-          mp_payment_id: String(paymentId),
-        })
-        .eq("id", Number(payment.external_reference))
-        .eq("status", "pending");
+      try {
+        await serviceRpc("mark_order_paid", {
+          p_order_id: Number(payment.external_reference),
+          p_payment_id: String(paymentId),
+        });
+      } catch (e) {
+        console.error("mark_order_paid:", e);
+      }
     }
 
     return new Response("OK", { status: 200 });

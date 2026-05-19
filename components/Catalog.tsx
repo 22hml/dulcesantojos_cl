@@ -72,7 +72,7 @@ export default function Catalog() {
   const header = getSectionHeader(mode);
 
   return (
-    <section id="catalogo" className="bg-black px-[5%] py-20">
+    <section id="catalogo" className="bg-theme-base px-[4%] py-12 sm:px-[5%] sm:py-20">
       <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
         <div>
           <p className="mb-2 text-[0.7rem] font-medium uppercase tracking-[0.2em] text-gold">
