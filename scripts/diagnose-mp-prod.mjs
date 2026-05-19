@@ -6,22 +6,59 @@ const get = (k) => {
   return m ? m[1].trim().replace(/^["']|["']$/g, "") : "";
 };
 
+function mpAppId(credential) {
+  const parts = credential.trim().split("-");
+  if (parts[0] !== "APP_USR" || !parts[1]) return null;
+  return parts[1];
+}
+
 const token = get("MP_ACCESS_TOKEN");
 const pub = get("NEXT_PUBLIC_MP_PUBLIC_KEY");
 const prefId =
   process.argv[2] || "3034480589-b6a1f5a6-45da-4edf-91d7-8cc9a079f2d7";
 
+const tokenApp = token ? mpAppId(token) : null;
+const pubApp = pub ? mpAppId(pub) : null;
+
 console.log("=== Credenciales ===");
-console.log("MP_ACCESS_TOKEN:", token ? `${token.slice(0, 15)}... len=${token.length}` : "FALTA");
-console.log("PUBLIC_KEY:", pub ? `${pub.slice(0, 15)}... len=${pub.length}` : "FALTA");
+console.log(
+  "MP_ACCESS_TOKEN:",
+  token ? `${token.slice(0, 15)}... len=${token.length}` : "FALTA"
+);
+console.log(
+  "PUBLIC_KEY:",
+  pub ? `${pub.slice(0, 15)}... len=${pub.length}` : "FALTA"
+);
+console.log("ID aplicación (token):", tokenApp || "no detectado");
+console.log("ID aplicación (public key):", pubApp || "no detectado");
 console.log("MP_USE_SANDBOX:", get("MP_USE_SANDBOX") || "(no definido = producción)");
 console.log("APP_URL:", get("NEXT_PUBLIC_APP_URL"));
 
-if (token && pub && token === pub) {
-  console.log("⚠️  Token y Public Key son IGUALES — probable error de copia");
+console.log("\n=== Diagnóstico ===");
+let ok = true;
+
+if (tokenApp && pubApp && tokenApp !== pubApp) {
+  console.log(
+    "❌ CRÍTICO: Token y Public Key son de APPS DISTINTAS.",
+    `\n   Token → app ${tokenApp}`,
+    `\n   Public Key → app ${pubApp}`,
+    "\n   → Pantalla en blanco en checkout. Copia AMBAS credenciales",
+    "\n     desde la MISMA aplicación en mercadopago.cl/developers/panel/app",
+    "\n     → Credenciales de producción (misma pestaña)."
+  );
+  ok = false;
+} else if (tokenApp && pubApp) {
+  console.log("✅ Token y Public Key son de la misma aplicación:", tokenApp);
 }
-if (token && pub && token.slice(0, 20) === pub.slice(0, 20)) {
-  console.log("⚠️  Token y Public Key parecen el mismo tipo de credencial");
+
+if (pub && pub.length < 40) {
+  console.log("❌ Public Key muy corta — puede estar incompleta");
+  ok = false;
+}
+
+if (token && pub && token === pub) {
+  console.log("❌ Token y Public Key son el mismo valor — copiaste mal");
+  ok = false;
 }
 
 console.log("\n=== Preferencia ===");
@@ -32,33 +69,34 @@ const pr = await fetch(
 const pref = await pr.json();
 console.log("GET preference:", pr.status);
 if (pr.ok) {
-  console.log("site_id:", pref.site_id);
   console.log("collector_id:", pref.collector_id);
   console.log("init_point:", pref.init_point);
-  console.log("sandbox_init_point:", pref.sandbox_init_point || "(ninguno)");
-  console.log("back_urls:", JSON.stringify(pref.back_urls));
-  console.log("notification_url:", pref.notification_url);
-  console.log("items:", pref.items);
+  console.log("back_urls OK:", !!pref.back_urls?.success);
 } else {
   console.log(JSON.stringify(pref, null, 2));
+  ok = false;
 }
 
-console.log("\n=== Cuenta (users/me) ===");
+console.log("\n=== Cuenta vendedor ===");
 const me = await fetch("https://api.mercadopago.com/users/me", {
   headers: { Authorization: `Bearer ${token}` },
 });
 const user = await me.json();
-console.log("status:", me.status);
 if (me.ok) {
-  console.log("user_id:", user.id);
-  console.log("site_id:", user.site_id);
-  console.log("nickname:", user.nickname);
-  console.log("status:", user.status);
+  console.log("user_id:", user.id, "| site:", user.site_id);
+  if (user.status?.confirmed_email === false) {
+    console.log(
+      "⚠️  Email no confirmado en Mercado Pago — confirma tu correo en mercadopago.cl"
+    );
+  }
+  if (user.status?.site_status !== "active") {
+    console.log("⚠️  Cuenta site_status:", user.status?.site_status);
+  }
 } else {
-  console.log(user);
+  console.log("users/me error:", user);
 }
 
-console.log("\n=== Crear preferencia de prueba (producción) ===");
+console.log("\n=== Crear preferencia nueva ===");
 const create = await fetch("https://api.mercadopago.com/checkout/preferences", {
   method: "POST",
   headers: {
@@ -87,14 +125,20 @@ const create = await fetch("https://api.mercadopago.com/checkout/preferences", {
 const created = await create.json();
 console.log("CREATE:", create.status);
 if (create.ok) {
-  console.log("id:", created.id);
-  console.log("init_point:", created.init_point);
-  console.log("Tiene sandbox_init_point:", !!created.sandbox_init_point);
+  console.log("Prueba abrir en navegador:\n ", created.init_point);
   if (created.sandbox_init_point) {
     console.log(
-      "⚠️  La API devolvió sandbox_init_point — el Access Token podría ser de PRUEBA, no producción"
+      "(Info: sandbox_init_point también existe; en Chile a veces aparece",
+      "incluso con token de producción — no es el problema principal.)"
     );
   }
 } else {
   console.log(JSON.stringify(created, null, 2));
+  ok = false;
 }
+
+console.log(
+  ok
+    ? "\n✅ Revisa cuenta/email y prueba el init_point en incógnito."
+    : "\n❌ Corrige lo marcado arriba, reinicia npm run dev y vuelve a probar."
+);
