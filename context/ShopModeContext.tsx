@@ -19,7 +19,7 @@ type ShopModeContextValue = {
 const ShopModeContext = createContext<ShopModeContextValue | null>(null);
 
 export function ShopModeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setModeState] = useState<ShopMode>("pasteleria");
+  const [mode, setModeState] = useState<ShopMode>("shop");
 
   const setMode = useCallback((next: ShopMode) => {
     setModeState(next);
