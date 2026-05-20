@@ -85,13 +85,15 @@ export default function CartDrawer() {
   const [fieldError, setFieldError] = useState<CustomerField | null>(null);
 
   useEffect(() => {
-    fetch("/api/delivery-zones")
+    if (!isOpen) return;
+
+    fetch("/api/delivery-zones", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) setZones(data);
       })
       .catch(() => {});
-  }, []);
+  }, [isOpen]);
 
   const selectedZone = useMemo(
     () => zones.find((z) => z.comuna === comuna),

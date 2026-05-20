@@ -143,7 +143,7 @@ export default function AdminPage() {
       const [pRes, oRes, zRes, hRes] = await Promise.all([
         fetch("/api/admin/products"),
         fetch("/api/admin/orders"),
-        fetch("/api/admin/delivery-zones"),
+        fetch("/api/admin/delivery-zones", { cache: "no-store" }),
         fetch("/api/admin/hero-slots"),
       ]);
       if (pRes.ok) setProducts(await pRes.json());
