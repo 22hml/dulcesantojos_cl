@@ -1,7 +1,8 @@
--- Observaciones del cliente en pedidos
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS observaciones TEXT;
-
+-- Envío a región (BlueExpress, cobro a destino) + correo del cliente
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_email TEXT;
+
+DROP FUNCTION IF EXISTS create_order_for_checkout(text, text, text, text, text, integer, integer, integer, jsonb);
+DROP FUNCTION IF EXISTS create_order_for_checkout(text, text, text, text, text, integer, integer, integer, jsonb, text);
 
 CREATE OR REPLACE FUNCTION create_order_for_checkout(
   p_delivery_type text,
@@ -38,4 +39,4 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION create_order_for_checkout TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION create_order_for_checkout(text, text, text, text, text, integer, integer, integer, jsonb, text, text) TO anon, authenticated, service_role;

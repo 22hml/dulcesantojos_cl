@@ -751,9 +751,14 @@ export default function AdminPage() {
                           {o.customer_name && ` · ${o.customer_name}`}
                         </p>
                         <p className="text-sm text-theme-muted">
-                          {o.delivery_type === "despacho" ? "🚚 Despacho" : "🏪 Retiro"}
+                          {o.delivery_type === "despacho"
+                            ? "🚚 Despacho"
+                            : o.delivery_type === "region"
+                              ? "📦 Región (BlueExpress)"
+                              : "🏪 Retiro"}
                           {o.address && ` · ${o.address}`}
                           {o.comuna && ` · ${o.comuna}`}
+                          {o.customer_email && ` · ${o.customer_email}`}
                         </p>
                         {o.observaciones && (
                           <p className="mt-1 text-sm text-gold/90">

@@ -18,7 +18,9 @@ import {
   serviceRpc,
   serviceUpdateOrder,
 } from "@/lib/supabase-service";
+import { isValidEmail } from "@/types/delivery";
 import type { CartItem } from "@/types";
+import type { DeliveryType } from "@/types/delivery";
 
 export async function POST(req: Request) {
   let step = "inicio";
@@ -32,16 +34,18 @@ export async function POST(req: Request) {
       comuna,
       customerName,
       customerPhone,
+      customerEmail,
       observaciones,
       deliveryCost: clientDeliveryCost,
       clientOrigin,
     } = body as {
       cart: Record<string, CartItem>;
-      deliveryType: "despacho" | "retiro";
+      deliveryType: DeliveryType;
       address?: string;
       comuna?: string;
       customerName: string;
       customerPhone: string;
+      customerEmail?: string;
       observaciones?: string;
       deliveryCost?: number;
       clientOrigin?: string;
@@ -116,6 +120,21 @@ export async function POST(req: Request) {
           typeof clientDeliveryCost === "number" ? clientDeliveryCost : 2990;
       }
       fullAddress = `${address.trim()}, ${comuna.trim()}`;
+    } else if (deliveryType === "region") {
+      if (!address?.trim()) {
+        return NextResponse.json(
+          { error: "Ingresa la dirección completa de envío" },
+          { status: 400 }
+        );
+      }
+      if (!customerEmail?.trim() || !isValidEmail(customerEmail)) {
+        return NextResponse.json(
+          { error: "Ingresa un correo electrónico válido" },
+          { status: 400 }
+        );
+      }
+      fullAddress = address.trim();
+      deliveryCost = 0;
     }
 
     const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
@@ -145,6 +164,8 @@ export async function POST(req: Request) {
         p_total: total,
         p_items: orderItems,
         p_observaciones: observaciones?.trim() || null,
+        p_customer_email:
+          deliveryType === "region" ? customerEmail?.trim() : null,
       });
     } catch (rpcErr) {
       console.warn("RPC create_order falló, insert directo:", rpcErr);
@@ -155,6 +176,8 @@ export async function POST(req: Request) {
         comuna: deliveryType === "despacho" ? comuna?.trim() : null,
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
+        customer_email:
+          deliveryType === "region" ? customerEmail?.trim() : null,
         observaciones: observaciones?.trim() || null,
         subtotal,
         delivery_cost: deliveryCost,

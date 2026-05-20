@@ -18,6 +18,8 @@ export type CartItem = Product & { qty: number };
 
 export type Cart = Record<number, CartItem>;
 
+export type { DeliveryType } from "@/types/delivery";
+
 export type OrderStatus =
   | "pending"
   | "paid"
@@ -37,11 +39,12 @@ export type Order = {
   mp_preference_id: string | null;
   mp_payment_id: string | null;
   status: OrderStatus;
-  delivery_type: "despacho" | "retiro";
+  delivery_type: "despacho" | "retiro" | "region";
   address: string | null;
   comuna?: string | null;
   customer_name: string | null;
   customer_phone: string | null;
+  customer_email?: string | null;
   observaciones?: string | null;
   subtotal: number;
   delivery_cost: number;

@@ -133,11 +133,12 @@ export async function serviceGetOrder(orderId: number) {
 
   return row as {
     id: number;
-    delivery_type: "despacho" | "retiro";
+    delivery_type: "despacho" | "retiro" | "region";
     address: string | null;
     comuna: string | null;
     customer_name: string | null;
     customer_phone: string | null;
+    customer_email: string | null;
     observaciones: string | null;
     subtotal: number;
     delivery_cost: number;

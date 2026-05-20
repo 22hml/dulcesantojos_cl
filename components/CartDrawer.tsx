@@ -8,17 +8,19 @@ import CartItemThumb from "@/components/CartItemThumb";
 import ComunaSelect from "@/components/ComunaSelect";
 import { FALLBACK_DELIVERY_ZONES } from "@/lib/fallback-zones";
 import type { Cart, DeliveryZone } from "@/types";
+import { isValidEmail, type DeliveryType } from "@/types/delivery";
 
 const waNumber = process.env.NEXT_PUBLIC_WA_NUMBER;
 
 const inputClass =
   "w-full rounded border border-theme bg-theme-input px-4 py-2.5 font-outfit text-sm text-theme placeholder:text-theme-muted focus:border-gold focus:outline-none";
 
-type CustomerField = "name" | "phone" | "comuna" | "address";
+type CustomerField = "name" | "phone" | "email" | "comuna" | "address";
 
 const FIELD_IDS: Record<CustomerField, string> = {
   name: "cart-field-name",
   phone: "cart-field-phone",
+  email: "cart-field-email",
   comuna: "cart-field-comuna",
   address: "cart-field-address",
 };
@@ -68,13 +70,13 @@ export default function CartDrawer() {
   const { cart, isOpen, closeCart, subtotal, setQty, applyStockSnapshot } =
     useCart();
 
-  const [deliveryType, setDeliveryType] = useState<"despacho" | "retiro">(
-    "retiro"
-  );
+  const [deliveryType, setDeliveryType] = useState<DeliveryType>("retiro");
   const [comuna, setComuna] = useState("");
   const [streetAddress, setStreetAddress] = useState("");
+  const [regionAddress, setRegionAddress] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [zones, setZones] = useState<DeliveryZone[]>(FALLBACK_DELIVERY_ZONES);
   const [loading, setLoading] = useState(false);
@@ -104,7 +106,9 @@ export default function CartDrawer() {
   const fullAddress =
     deliveryType === "despacho" && streetAddress.trim() && comuna
       ? `${streetAddress.trim()}, ${comuna}`
-      : "";
+      : deliveryType === "region" && regionAddress.trim()
+        ? regionAddress.trim()
+        : "";
 
   function fieldInputClass(field: CustomerField) {
     return fieldError === field
@@ -135,6 +139,23 @@ export default function CartDrawer() {
       }
       if (!streetAddress.trim()) {
         showFieldError("address", "Ingresa calle, número y depto/casa");
+        return false;
+      }
+    }
+    if (deliveryType === "region") {
+      if (!regionAddress.trim()) {
+        showFieldError(
+          "address",
+          "Ingresa la dirección completa (calle, número, ciudad y región)"
+        );
+        return false;
+      }
+      if (!customerEmail.trim()) {
+        showFieldError("email", "Ingresa tu correo electrónico");
+        return false;
+      }
+      if (!isValidEmail(customerEmail)) {
+        showFieldError("email", "Ingresa un correo electrónico válido");
         return false;
       }
     }
@@ -247,10 +268,15 @@ export default function CartDrawer() {
         body: JSON.stringify({
           cart: syncedCart,
           deliveryType,
-          address: streetAddress.trim(),
+          address:
+            deliveryType === "region"
+              ? regionAddress.trim()
+              : streetAddress.trim(),
           comuna,
           customerName: customerName.trim(),
           customerPhone: customerPhone.trim(),
+          customerEmail:
+            deliveryType === "region" ? customerEmail.trim() : undefined,
           observaciones: observaciones.trim() || undefined,
           deliveryCost,
           clientOrigin:
@@ -284,6 +310,8 @@ export default function CartDrawer() {
               comuna: deliveryType === "despacho" ? comuna : null,
               customer_name: customerName.trim(),
               customer_phone: customerPhone.trim(),
+              customer_email:
+                deliveryType === "region" ? customerEmail.trim() : null,
               observaciones: observaciones.trim() || null,
               subtotal: syncedSubtotal,
               delivery_cost: deliveryCost,
@@ -342,6 +370,8 @@ export default function CartDrawer() {
         comuna: deliveryType === "despacho" ? comuna : null,
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
+        customer_email:
+          deliveryType === "region" ? customerEmail.trim() : null,
         observaciones: observaciones.trim() || null,
         subtotal: freshSubtotal,
         delivery_cost: deliveryCost,
@@ -447,41 +477,67 @@ export default function CartDrawer() {
                 <h3 className="mb-4 font-bebas text-base tracking-wider text-theme-soft">
                   ¿CÓMO LO RECIBE?
                 </h3>
-                <div className="mb-4 grid grid-cols-2 gap-2 sm:gap-3">
+                <div className="mb-4 grid grid-cols-3 gap-2">
                   <button
                     type="button"
-                    onClick={() => setDeliveryType("despacho")}
-                    className={`rounded border p-2.5 text-center transition sm:p-3 ${
+                    onClick={() => {
+                      setDeliveryType("despacho");
+                      setFieldError(null);
+                    }}
+                    className={`rounded border p-2 text-center transition ${
                       deliveryType === "despacho"
                         ? "border-gold bg-gold/10"
                         : "border-theme bg-theme-input"
                     }`}
                   >
-                    <span className="mb-1 block text-xl sm:text-2xl">🛵</span>
-                    <span className="block text-[0.75rem] font-semibold text-theme sm:text-[0.78rem]">
+                    <span className="mb-1 block text-lg sm:text-xl">🛵</span>
+                    <span className="block text-[0.68rem] font-semibold leading-tight text-theme sm:text-[0.72rem]">
                       Despacho
                     </span>
-                    <span className="text-[0.65rem] text-gold sm:text-[0.7rem]">
+                    <span className="text-[0.6rem] text-gold sm:text-[0.65rem]">
                       {comuna && selectedZone
                         ? `+${formatCLP(selectedZone.delivery_cost)}`
-                        : "Según comuna"}
+                        : "RM"}
                     </span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setDeliveryType("retiro")}
-                    className={`rounded border p-2.5 text-center transition sm:p-3 ${
+                    onClick={() => {
+                      setDeliveryType("retiro");
+                      setFieldError(null);
+                    }}
+                    className={`rounded border p-2 text-center transition ${
                       deliveryType === "retiro"
                         ? "border-gold bg-gold/10"
                         : "border-theme bg-theme-input"
                     }`}
                   >
-                    <span className="mb-1 block text-xl sm:text-2xl">🏪</span>
-                    <span className="block text-[0.75rem] font-semibold text-theme sm:text-[0.78rem]">
+                    <span className="mb-1 block text-lg sm:text-xl">🏪</span>
+                    <span className="block text-[0.68rem] font-semibold leading-tight text-theme sm:text-[0.72rem]">
                       Retiro
                     </span>
-                    <span className="text-[0.65rem] text-gold sm:text-[0.7rem]">
+                    <span className="text-[0.6rem] text-gold sm:text-[0.65rem]">
                       Gratis
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeliveryType("region");
+                      setFieldError(null);
+                    }}
+                    className={`rounded border p-2 text-center transition ${
+                      deliveryType === "region"
+                        ? "border-gold bg-gold/10"
+                        : "border-theme bg-theme-input"
+                    }`}
+                  >
+                    <span className="mb-1 block text-lg sm:text-xl">📦</span>
+                    <span className="block text-[0.68rem] font-semibold leading-tight text-theme sm:text-[0.72rem]">
+                      Región
+                    </span>
+                    <span className="text-[0.6rem] leading-tight text-gold sm:text-[0.65rem]">
+                      BlueExpress
                     </span>
                   </button>
                 </div>
@@ -518,6 +574,49 @@ export default function CartDrawer() {
                       }}
                       className={fieldInputClass("address")}
                     />
+                  </div>
+                ) : deliveryType === "region" ? (
+                  <div className="space-y-2">
+                    <p className="rounded border border-gold/25 bg-gold/5 px-3 py-2 text-[0.75rem] leading-relaxed text-theme-muted">
+                      Envío por{" "}
+                      <strong className="text-theme">BlueExpress</strong> con{" "}
+                      <strong className="text-theme">cobro a destino</strong>.
+                      El costo del flete no está incluido en el total del
+                      pedido.
+                    </p>
+                    <label className="block text-[0.72rem] uppercase tracking-wider text-theme-muted">
+                      Dirección completa (calle, número, ciudad, región){" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      id="cart-field-address"
+                      placeholder="Ej: Los Carrera 450, Puerto Montt, Los Lagos"
+                      value={regionAddress}
+                      onChange={(e) => {
+                        setRegionAddress(e.target.value);
+                        if (fieldError === "address") setFieldError(null);
+                      }}
+                      className={`${fieldInputClass("address")} min-h-[72px] resize-y`}
+                      rows={2}
+                    />
+                    <label className="block text-[0.72rem] uppercase tracking-wider text-theme-muted">
+                      Correo electrónico <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="cart-field-email"
+                      type="email"
+                      autoComplete="email"
+                      placeholder="tu@correo.com"
+                      value={customerEmail}
+                      onChange={(e) => {
+                        setCustomerEmail(e.target.value);
+                        if (fieldError === "email") setFieldError(null);
+                      }}
+                      className={fieldInputClass("email")}
+                    />
+                    <p className="text-[0.72rem] text-theme-muted">
+                      Teléfono y nombre se completan abajo en datos de contacto.
+                    </p>
                   </div>
                 ) : (
                   <p className="text-[0.78rem] text-theme-muted">
@@ -585,7 +684,9 @@ export default function CartDrawer() {
               </div>
               <div className="flex justify-between">
                 <span>
-                  Despacho
+                  {deliveryType === "region"
+                    ? "Envío región"
+                    : "Despacho"}
                   {deliveryType === "despacho" && comuna ? ` (${comuna})` : ""}
                 </span>
                 <span>
@@ -593,7 +694,9 @@ export default function CartDrawer() {
                     ? comuna
                       ? formatCLP(deliveryCost)
                       : "Elige comuna"
-                    : "Gratis"}
+                    : deliveryType === "region"
+                      ? "Cobro a destino"
+                      : "Gratis"}
                 </span>
               </div>
               <div className="flex justify-between border-t border-theme pt-3 font-bebas text-xl text-theme">
