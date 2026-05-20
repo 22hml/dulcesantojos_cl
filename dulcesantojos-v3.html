@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dulces Antojos — Pastelería & Shop</title>
+<title>Dulces Antojos - Pastelería & Shop</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Dancing+Script:wght@700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -346,11 +346,11 @@ footer a:hover { text-decoration:underline; }
       <span class="big">DULCES</span>
       <span class="script">Antojos</span>
     </div>
-    <p class="pane-desc">Tortas, cheesecakes y postres artesanales preparados con amor. Despacho en Santiago o retiro en tienda.</p>
+    <p class="pane-desc">Tu celebración merece lo mejor. Pastelería con despacho en Santiago y regiones. Cajas de torta premium para reposteras. Paga con Mercado Pago.</p>
     <button class="pane-cta" onclick="event.stopPropagation();switchMode('pasteleria');scrollToCatalog()">Ver tortas y postres →</button>
   </div>
   <div class="hero-pane shop" onclick="switchMode('shop')">
-    <div class="pane-tag">Shop · Packaging Artesanal</div>
+    <div class="pane-tag">Shop · Packaging</div>
     <div class="pane-icon">📦</div>
     <div class="pane-title">
       <span class="big">SHOP</span>
@@ -370,7 +370,7 @@ footer a:hover { text-decoration:underline; }
 <section class="catalog-section" id="secPasteleria">
   <div class="sec-header">
     <div>
-      <div class="sec-label">Pastelería artesanal</div>
+      <div class="sec-label">Pastelería</div>
       <h2 class="sec-title">TORTAS & <em>Postres</em></h2>
     </div>
     <div class="filters" id="filtersPasteleria"></div>
@@ -463,7 +463,7 @@ let activeMode = 'pasteleria';
 let filters = { pasteleria: 'Todos', shop: 'Todos' };
 
 // Marquee
-const mItems = ['Tortas Artesanales','Cheesecakes','Brownies','Cupcakes','Postres','Cajas Premium','Packaging Repostería','Venta por Mayor','Despacho Santiago','Mercado Pago'];
+const mItems = ['Tortas Artesanales','Cheesecakes','Brownies','Cupcakes','Postres','Cajas Premium','Packaging Repostería','Venta por Mayor','Despacho Santiago y regiones','Mercado Pago'];
 const mt = document.getElementById('marquee');
 const rep = [...mItems,...mItems,...mItems,...mItems];
 mt.innerHTML = rep.map(t=>`<span>✦ ${t}</span>`).join('');

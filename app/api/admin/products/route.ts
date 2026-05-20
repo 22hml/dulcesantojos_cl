@@ -20,12 +20,31 @@ export async function GET() {
   return NextResponse.json(data);
 }
 
+function normalizeHeroSort(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 1 || n > 4) return null;
+  return n;
+}
+
+async function clearHeroSortSlot(
+  supabase: ReturnType<typeof createAdminClient>,
+  slot: number,
+  exceptId?: number
+) {
+  let q = supabase.from("products").update({ hero_sort: null }).eq("hero_sort", slot);
+  if (exceptId != null) q = q.neq("id", exceptId);
+  await q;
+}
+
 export async function POST(req: Request) {
   if (!isAdminSession()) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
   const body = await req.json();
+  const heroSort = normalizeHeroSort(body.hero_sort);
   const supabase = createAdminClient();
+  if (heroSort != null) await clearHeroSortSlot(supabase, heroSort);
   const { data, error } = await supabase
     .from("products")
     .insert({
@@ -38,6 +57,7 @@ export async function POST(req: Request) {
       mode: body.mode || "pasteleria",
       highlight: body.highlight || null,
       image_url: body.image_url || null,
+      hero_sort: heroSort,
       active: body.active !== false,
     })
     .select()
@@ -53,8 +73,17 @@ export async function PATCH(req: Request) {
   if (!isAdminSession()) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
-  const { id, ...fields } = await req.json();
+  const { id, ...rawFields } = await req.json();
   const supabase = createAdminClient();
+  const fields = { ...rawFields } as Record<string, unknown>;
+
+  if ("hero_sort" in fields) {
+    fields.hero_sort = normalizeHeroSort(fields.hero_sort);
+    if (fields.hero_sort != null) {
+      await clearHeroSortSlot(supabase, fields.hero_sort as number, id);
+    }
+  }
+
   const { data, error } = await supabase
     .from("products")
     .update(fields)

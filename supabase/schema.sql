@@ -10,6 +10,7 @@ CREATE TABLE products (
   mode TEXT DEFAULT 'pasteleria',
   image_url TEXT,
   highlight TEXT,
+  hero_sort SMALLINT CHECK (hero_sort IS NULL OR (hero_sort >= 1 AND hero_sort <= 4)),
   active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

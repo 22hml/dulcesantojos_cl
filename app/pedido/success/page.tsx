@@ -1,4 +1,8 @@
-import Link from "next/link";
+import OrderWhatsAppPrompt from "@/components/OrderWhatsAppPrompt";
+import { buildOrderWhatsAppUrl } from "@/lib/order-whatsapp";
+import { serviceGetOrder } from "@/lib/supabase-service";
+
+export const dynamic = "force-dynamic";
 
 type Props = {
   searchParams: {
@@ -8,36 +12,36 @@ type Props = {
   };
 };
 
-export default function PedidoSuccessPage({ searchParams }: Props) {
-  const orderId = searchParams.external_reference;
+export default async function PedidoSuccessPage({ searchParams }: Props) {
+  const orderIdStr = searchParams.external_reference;
   const paymentId = searchParams.payment_id;
 
+  let whatsappUrl: string | null = null;
+
+  if (orderIdStr) {
+    const id = parseInt(orderIdStr, 10);
+    if (!Number.isNaN(id)) {
+      try {
+        const order = await serviceGetOrder(id);
+        if (order) {
+          const items = Array.isArray(order.items) ? order.items : [];
+          whatsappUrl = buildOrderWhatsAppUrl(
+            { ...order, id: order.id, items },
+            { mercadoPago: true, paymentId }
+          );
+        }
+      } catch (e) {
+        console.error("pedido/success:", e);
+      }
+    }
+  }
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-black px-4 text-center">
-      <span className="text-6xl">✅</span>
-      <h1 className="mt-4 font-bebas text-4xl tracking-wide text-white">
-        ¡PAGO RECIBIDO!
-      </h1>
-      <p className="mt-2 max-w-md text-gray">
-        Gracias por tu pedido. Te contactaremos por WhatsApp para coordinar la
-        entrega o el retiro.
-      </p>
-      {orderId && (
-        <p className="mt-4 font-outfit text-sm text-gray">
-          Pedido #{orderId}
-          {paymentId ? ` · Pago ${paymentId}` : ""}
-        </p>
-      )}
-      <p className="mt-2 font-outfit text-xs text-gray/80">
-        Si el estado tarda unos segundos en actualizarse en el panel, es normal:
-        Mercado Pago confirma por webhook.
-      </p>
-      <Link
-        href="/"
-        className="mt-8 rounded bg-gold px-8 py-3 font-outfit text-sm font-bold uppercase tracking-widest text-black hover:bg-gold-light"
-      >
-        Volver al inicio
-      </Link>
-    </div>
+    <OrderWhatsAppPrompt
+      variant="success"
+      whatsappUrl={whatsappUrl}
+      orderId={orderIdStr}
+      paymentId={paymentId}
+    />
   );
 }

@@ -78,7 +78,7 @@ export default function Catalog() {
           <p className="mb-2 text-[0.7rem] font-medium uppercase tracking-[0.2em] text-gold">
             {header.label}
           </p>
-          <h2 className="font-bebas text-[clamp(2rem,4vw,3.2rem)] leading-none tracking-wide text-white">
+          <h2 className="font-bebas text-[clamp(2rem,4vw,3.2rem)] leading-none tracking-wide text-theme">
             {header.title}{" "}
             <em className="font-script text-[0.85em] not-italic text-gold">
               {header.em}
@@ -94,7 +94,7 @@ export default function Catalog() {
               className={`rounded-sm border px-4 py-2 font-outfit text-[0.75rem] uppercase tracking-wider transition ${
                 filter === cat
                   ? "border-gold bg-gold font-semibold text-black"
-                  : "border-border bg-transparent text-gray hover:border-gold hover:text-white"
+                  : "border-border bg-transparent text-gray hover:border-gold hover:text-theme"
               }`}
             >
               {cat}
@@ -107,7 +107,7 @@ export default function Catalog() {
         <div className="mb-10 flex items-center gap-4 rounded border border-gold/15 bg-card p-5 text-[0.85rem] leading-relaxed text-gray">
           <span className="shrink-0 text-2xl">📦</span>
           <p>
-            <strong className="text-white">Venta por unidad y al por mayor.</strong>{" "}
+            <strong className="text-theme">Venta por unidad y al por mayor.</strong>{" "}
             Todas nuestras cajas son de calidad premium para pastelerías y
             reposteras. ¿Necesitas un volumen especial?{" "}
             {waNumber && (
@@ -156,7 +156,7 @@ function getSectionHeader(mode: ShopMode) {
     };
   }
   return {
-    label: "Pastelería artesanal",
+    label: "Pastelería",
     title: "TORTAS &",
     em: "Postres",
   };

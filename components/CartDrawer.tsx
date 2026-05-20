@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { formatCLP } from "@/lib/format";
-import { getProductEmoji } from "@/lib/product-emoji";
+import { buildOrderWhatsAppUrl } from "@/lib/order-whatsapp";
+import CartItemThumb from "@/components/CartItemThumb";
+import ComunaSelect from "@/components/ComunaSelect";
 import { FALLBACK_DELIVERY_ZONES } from "@/lib/fallback-zones";
 import type { DeliveryZone } from "@/types";
 
@@ -12,24 +14,44 @@ const waNumber = process.env.NEXT_PUBLIC_WA_NUMBER;
 const inputClass =
   "w-full rounded border border-theme bg-theme-input px-4 py-2.5 font-outfit text-sm text-theme placeholder:text-theme-muted focus:border-gold focus:outline-none";
 
+function CardIcon() {
+  return (
+    <svg
+      width="22"
+      height="16"
+      viewBox="0 0 22 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+      className="shrink-0"
+    >
+      <rect
+        x="0.5"
+        y="0.5"
+        width="21"
+        height="15"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1"
+      />
+      <rect x="0.5" y="4" width="21" height="3" fill="currentColor" />
+      <rect x="3" y="10" width="6" height="2" rx="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
 export default function CartDrawer() {
-  const {
-    cart,
-    isOpen,
-    closeCart,
-    subtotal,
-    setQty,
-    clearCart,
-  } = useCart();
+  const { cart, isOpen, closeCart, subtotal, setQty, clearCart } = useCart();
 
   const [deliveryType, setDeliveryType] = useState<"despacho" | "retiro">(
     "retiro"
   );
-  const [zones, setZones] = useState<DeliveryZone[]>(FALLBACK_DELIVERY_ZONES);
   const [comuna, setComuna] = useState("");
   const [streetAddress, setStreetAddress] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [observaciones, setObservaciones] = useState("");
+  const [zones, setZones] = useState<DeliveryZone[]>(FALLBACK_DELIVERY_ZONES);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,6 +80,10 @@ export default function CartDrawer() {
       : "";
 
   async function handleCheckout() {
+    if (!customerName.trim()) {
+      setError("Ingresa tu nombre para el pedido");
+      return;
+    }
     if (!customerPhone.trim()) {
       setError("Ingresa tu teléfono para coordinar el pedido");
       return;
@@ -85,8 +111,9 @@ export default function CartDrawer() {
           deliveryType,
           address: streetAddress.trim(),
           comuna,
-          customerName,
-          customerPhone,
+          customerName: customerName.trim(),
+          customerPhone: customerPhone.trim(),
+          observaciones: observaciones.trim() || undefined,
           deliveryCost,
           clientOrigin:
             typeof window !== "undefined" ? window.location.origin : undefined,
@@ -107,6 +134,37 @@ export default function CartDrawer() {
         data.sandbox_init_point;
 
       if (checkoutUrl) {
+        const orderId =
+          typeof data.order_id === "number" ? data.order_id : undefined;
+        if (orderId) {
+          const waUrl = buildOrderWhatsAppUrl(
+            {
+              id: orderId,
+              delivery_type: deliveryType,
+              address: fullAddress || null,
+              comuna: deliveryType === "despacho" ? comuna : null,
+              customer_name: customerName.trim(),
+              customer_phone: customerPhone.trim(),
+              observaciones: observaciones.trim() || null,
+              subtotal,
+              delivery_cost: deliveryCost,
+              total,
+              items: items.map((i) => ({
+                name: i.name,
+                qty: i.qty,
+                price: i.price,
+              })),
+            },
+            { mercadoPago: true }
+          );
+          if (waUrl) {
+            try {
+              sessionStorage.setItem("dulcesantojos_mp_wa_url", waUrl);
+            } catch {
+              /* ignore */
+            }
+          }
+        }
         clearCart();
         window.location.href = checkoutUrl;
       } else {
@@ -124,21 +182,24 @@ export default function CartDrawer() {
 
   function buildWhatsAppLink() {
     if (!waNumber || items.length === 0) return "#";
-    const lines = items.map(
-      (i) => `• ${i.name} x${i.qty} — ${formatCLP(i.price * i.qty)}`
+    return (
+      buildOrderWhatsAppUrl({
+        delivery_type: deliveryType,
+        address: fullAddress || null,
+        comuna: deliveryType === "despacho" ? comuna : null,
+        customer_name: customerName.trim(),
+        customer_phone: customerPhone.trim(),
+        observaciones: observaciones.trim() || null,
+        subtotal,
+        delivery_cost: deliveryCost,
+        total,
+        items: items.map((i) => ({
+          name: i.name,
+          qty: i.qty,
+          price: i.price,
+        })),
+      }) ?? "#"
     );
-    let entrega =
-      deliveryType === "despacho"
-        ? `Despacho a domicilio`
-        : "Retiro en tienda";
-    if (deliveryType === "despacho" && fullAddress) {
-      entrega += `\n📍 *Dirección:* ${fullAddress}`;
-    }
-    if (deliveryType === "despacho" && deliveryCost > 0) {
-      entrega += `\n🛵 *Costo despacho:* ${formatCLP(deliveryCost)}`;
-    }
-    const msg = `🎂 *Hola Dulces Antojos!* Quiero hacer un pedido:\n\n${lines.join("\n")}\n\n*Subtotal:* ${formatCLP(subtotal)}\n*Despacho:* ${deliveryType === "despacho" ? formatCLP(deliveryCost) : "Gratis"}\n*Total:* ${formatCLP(total)}\n\n*Entrega:* ${entrega}${customerName ? `\n👤 ${customerName}` : ""}${customerPhone ? `\n📱 ${customerPhone}` : ""}`;
-    return `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`;
   }
 
   if (!isOpen) return null;
@@ -182,9 +243,7 @@ export default function CartDrawer() {
                     key={item.id}
                     className="flex items-center gap-3 border-b border-theme py-4 sm:gap-4"
                   >
-                    <span className="shrink-0 text-2xl sm:text-3xl">
-                      {getProductEmoji(item)}
-                    </span>
+                    <CartItemThumb item={item} size={52} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[0.88rem] font-semibold text-theme">
                         {item.name}
@@ -262,22 +321,17 @@ export default function CartDrawer() {
                 {deliveryType === "despacho" ? (
                   <div className="space-y-2">
                     <label className="block text-[0.72rem] uppercase tracking-wider text-theme-muted">
-                      Comuna *
+                      Comuna <span className="text-red-500">*</span>
                     </label>
-                    <select
+                    <ComunaSelect
+                      zones={zones}
                       value={comuna}
-                      onChange={(e) => setComuna(e.target.value)}
-                      className={inputClass}
-                    >
-                      <option value="">Selecciona comuna</option>
-                      {zones.map((z) => (
-                        <option key={z.id} value={z.comuna}>
-                          {z.comuna} — {formatCLP(z.delivery_cost)}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setComuna}
+                      inputClassName={inputClass}
+                    />
                     <label className="block text-[0.72rem] uppercase tracking-wider text-theme-muted">
-                      Dirección (calle, número, depto) *
+                      Dirección (calle, número, depto){" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -294,20 +348,44 @@ export default function CartDrawer() {
                 )}
               </div>
 
-              <input
-                type="text"
-                placeholder="Tu nombre"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className={`mt-4 ${inputClass}`}
-              />
-              <input
-                type="tel"
-                placeholder="Teléfono WhatsApp *"
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                className={`mt-2 ${inputClass}`}
-              />
+              <div className="mt-6 border-t border-theme pt-5">
+                <h3 className="mb-4 font-bebas text-base tracking-wider text-theme-soft">
+                  DATOS DE CONTACTO
+                </h3>
+                <label className="mb-1 block text-[0.72rem] text-theme-muted">
+                  Nombre <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Tu nombre completo"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className={inputClass}
+                  required
+                />
+                <label className="mb-1 mt-3 block text-[0.72rem] text-theme-muted">
+                  Teléfono WhatsApp <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  placeholder="Ej: +56 9 1234 5678"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className={inputClass}
+                  required
+                />
+                <label className="mb-1 mt-3 block text-[0.72rem] text-theme-muted">
+                  Observaciones{" "}
+                  <span className="text-theme-muted/60">(opcional)</span>
+                </label>
+                <textarea
+                  placeholder="Ej: Sin nueces, entregar después de las 18:00…"
+                  value={observaciones}
+                  onChange={(e) => setObservaciones(e.target.value)}
+                  className={`${inputClass} min-h-[72px] resize-y`}
+                  rows={2}
+                />
+              </div>
             </>
           )}
         </div>
@@ -320,7 +398,10 @@ export default function CartDrawer() {
                 <span>{formatCLP(subtotal)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Despacho</span>
+                <span>
+                  Despacho
+                  {deliveryType === "despacho" && comuna ? ` (${comuna})` : ""}
+                </span>
                 <span>
                   {deliveryType === "despacho"
                     ? comuna
@@ -348,9 +429,15 @@ export default function CartDrawer() {
                 (deliveryType === "despacho" && (!comuna || !selectedZone))
               }
               onClick={handleCheckout}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded bg-gold py-3.5 font-outfit text-[0.82rem] font-bold uppercase tracking-widest text-black transition hover:bg-gold-light disabled:opacity-60 sm:py-4 sm:text-[0.88rem]"
+              className="mt-4 flex w-full flex-col items-center justify-center gap-1 rounded bg-gold px-4 py-[1.2rem] font-outfit text-black transition hover:bg-gold-light disabled:opacity-60"
             >
-              {loading ? "Redirigiendo…" : "💳 Pagar con Mercado Pago"}
+              <span className="flex items-center justify-center gap-2.5 text-[0.88rem] font-bold uppercase tracking-widest">
+                <CardIcon />
+                {loading ? "Redirigiendo…" : "Pagar con Mercado Pago"}
+              </span>
+              <span className="text-[0.65rem] font-normal normal-case tracking-normal text-black/70">
+                Tarjeta, débito o transferencia
+              </span>
             </button>
 
             {waNumber && (
@@ -360,7 +447,7 @@ export default function CartDrawer() {
                 rel="noopener noreferrer"
                 className="mt-3 flex w-full items-center justify-center gap-2 rounded border border-wa/30 py-3 font-outfit text-[0.75rem] font-semibold uppercase tracking-wider text-wa transition hover:border-wa hover:bg-wa/10 sm:text-[0.8rem]"
               >
-                Consultar por WhatsApp
+                Enviar pedido por WhatsApp
               </a>
             )}
           </div>
@@ -369,3 +456,4 @@ export default function CartDrawer() {
     </div>
   );
 }
+

@@ -3,6 +3,7 @@
 -- ═══════════════════════════════════════════════════════════════
 
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS comuna TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS observaciones TEXT;
 
 -- Desbloquea pedidos: el checkout solo escribe desde el servidor (API)
 ALTER TABLE orders DISABLE ROW LEVEL SECURITY;
@@ -18,7 +19,8 @@ CREATE OR REPLACE FUNCTION create_order_for_checkout(
   p_subtotal integer,
   p_delivery_cost integer,
   p_total integer,
-  p_items jsonb
+  p_items jsonb,
+  p_observaciones text DEFAULT NULL
 )
 RETURNS integer
 LANGUAGE plpgsql
@@ -30,11 +32,11 @@ DECLARE
 BEGIN
   INSERT INTO orders (
     status, delivery_type, address, comuna,
-    customer_name, customer_phone,
+    customer_name, customer_phone, observaciones,
     subtotal, delivery_cost, total, items
   ) VALUES (
     'pending', p_delivery_type, p_address, p_comuna,
-    p_customer_name, p_customer_phone,
+    p_customer_name, p_customer_phone, p_observaciones,
     p_subtotal, p_delivery_cost, p_total, p_items
   )
   RETURNING id INTO new_id;

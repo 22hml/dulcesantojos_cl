@@ -1,22 +1,46 @@
-import Link from "next/link";
+import OrderWhatsAppPrompt from "@/components/OrderWhatsAppPrompt";
+import { buildOrderWhatsAppUrl } from "@/lib/order-whatsapp";
+import { serviceGetOrder } from "@/lib/supabase-service";
 
-export default function PedidoPendingPage() {
+export const dynamic = "force-dynamic";
+
+type Props = {
+  searchParams: {
+    external_reference?: string;
+    payment_id?: string;
+  };
+};
+
+export default async function PedidoPendingPage({ searchParams }: Props) {
+  const orderIdStr = searchParams.external_reference;
+  const paymentId = searchParams.payment_id;
+
+  let whatsappUrl: string | null = null;
+
+  if (orderIdStr) {
+    const id = parseInt(orderIdStr, 10);
+    if (!Number.isNaN(id)) {
+      try {
+        const order = await serviceGetOrder(id);
+        if (order) {
+          const items = Array.isArray(order.items) ? order.items : [];
+          whatsappUrl = buildOrderWhatsAppUrl(
+            { ...order, id: order.id, items },
+            { pagoPendiente: true, paymentId }
+          );
+        }
+      } catch (e) {
+        console.error("pedido/pending:", e);
+      }
+    }
+  }
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-black px-4 text-center">
-      <span className="text-6xl">⏳</span>
-      <h1 className="mt-4 font-bebas text-4xl tracking-wide text-white">
-        PAGO PENDIENTE
-      </h1>
-      <p className="mt-2 max-w-md text-gray">
-        Estamos esperando la confirmación de tu pago. Te avisaremos cuando se
-        acredite.
-      </p>
-      <Link
-        href="/"
-        className="mt-8 rounded bg-gold px-8 py-3 font-outfit text-sm font-bold uppercase tracking-widest text-black hover:bg-gold-light"
-      >
-        Volver al inicio
-      </Link>
-    </div>
+    <OrderWhatsAppPrompt
+      variant="pending"
+      whatsappUrl={whatsappUrl}
+      orderId={orderIdStr}
+      paymentId={paymentId}
+    />
   );
 }

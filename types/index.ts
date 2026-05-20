@@ -9,6 +9,8 @@ export type Product = {
   mode: string;
   image_url: string | null;
   highlight: string | null;
+  /** 1–4 = casilla en el hero del inicio; null = no destacado */
+  hero_sort?: number | null;
   active: boolean;
 };
 
@@ -40,6 +42,7 @@ export type Order = {
   comuna?: string | null;
   customer_name: string | null;
   customer_phone: string | null;
+  observaciones?: string | null;
   subtotal: number;
   delivery_cost: number;
   total: number;

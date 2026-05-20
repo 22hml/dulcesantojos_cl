@@ -77,6 +77,44 @@ export async function serviceInsertOrder(row: Record<string, unknown>) {
   return rows[0]?.id;
 }
 
+export async function serviceGetOrder(orderId: number) {
+  const { url, key } = getServiceConfig();
+  const res = await fetch(
+    `${url}/rest/v1/orders?id=eq.${orderId}&select=*&limit=1`,
+    {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+      },
+      next: { revalidate: 0 },
+    }
+  );
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const err = data as { message?: string };
+    throw new Error(err?.message || `No se pudo leer pedido (${res.status})`);
+  }
+
+  const rows = (await res.json()) as Record<string, unknown>[];
+  const row = rows[0];
+  if (!row) return null;
+
+  return row as {
+    id: number;
+    delivery_type: "despacho" | "retiro";
+    address: string | null;
+    comuna: string | null;
+    customer_name: string | null;
+    customer_phone: string | null;
+    observaciones: string | null;
+    subtotal: number;
+    delivery_cost: number;
+    total: number;
+    items: { id: number; name: string; qty: number; price: number }[];
+  };
+}
+
 /** Actualiza pedido por REST (orders tiene RLS desactivado en fix-orders-rls.sql) */
 export async function serviceUpdateOrder(
   orderId: number,

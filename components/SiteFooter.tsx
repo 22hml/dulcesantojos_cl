@@ -2,9 +2,9 @@ const waNumber = process.env.NEXT_PUBLIC_WA_NUMBER;
 
 export default function SiteFooter() {
   return (
-    <footer className="flex flex-wrap items-center justify-between gap-6 border-t border-border bg-black px-[5%] py-12">
+    <footer className="flex flex-wrap items-center justify-between gap-6 border-t border-border bg-theme-elevated px-[5%] py-12">
       <div>
-        <span className="font-bebas text-lg tracking-widest text-white">
+        <span className="font-bebas text-lg tracking-widest text-theme">
           DULCES
         </span>
         <span className="font-script block text-[1.3rem] leading-[0.9] text-gold">

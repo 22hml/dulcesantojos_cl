@@ -23,6 +23,7 @@ export async function POST(req: Request) {
       comuna,
       customerName,
       customerPhone,
+      observaciones,
       deliveryCost: clientDeliveryCost,
       clientOrigin,
     } = body as {
@@ -30,8 +31,9 @@ export async function POST(req: Request) {
       deliveryType: "despacho" | "retiro";
       address?: string;
       comuna?: string;
-      customerName?: string;
+      customerName: string;
       customerPhone: string;
+      observaciones?: string;
       deliveryCost?: number;
       clientOrigin?: string;
     };
@@ -39,6 +41,20 @@ export async function POST(req: Request) {
     const items = Object.values(cart) as CartItem[];
     if (items.length === 0) {
       return NextResponse.json({ error: "Carrito vacío" }, { status: 400 });
+    }
+
+    if (!customerName?.trim()) {
+      return NextResponse.json(
+        { error: "Ingresa tu nombre para el pedido" },
+        { status: 400 }
+      );
+    }
+
+    if (!customerPhone?.trim()) {
+      return NextResponse.json(
+        { error: "Ingresa tu teléfono para coordinar el pedido" },
+        { status: 400 }
+      );
     }
 
     for (const item of items) {
@@ -100,12 +116,13 @@ export async function POST(req: Request) {
         p_delivery_type: deliveryType,
         p_address: fullAddress,
         p_comuna: deliveryType === "despacho" ? comuna?.trim() : null,
-        p_customer_name: customerName || null,
-        p_customer_phone: customerPhone,
+        p_customer_name: customerName.trim(),
+        p_customer_phone: customerPhone.trim(),
         p_subtotal: subtotal,
         p_delivery_cost: deliveryCost,
         p_total: total,
         p_items: orderItems,
+        p_observaciones: observaciones?.trim() || null,
       });
     } catch (rpcErr) {
       console.warn("RPC create_order falló, insert directo:", rpcErr);
@@ -114,8 +131,9 @@ export async function POST(req: Request) {
         delivery_type: deliveryType,
         address: fullAddress,
         comuna: deliveryType === "despacho" ? comuna?.trim() : null,
-        customer_name: customerName || null,
-        customer_phone: customerPhone,
+        customer_name: customerName.trim(),
+        customer_phone: customerPhone.trim(),
+        observaciones: observaciones?.trim() || null,
         subtotal,
         delivery_cost: deliveryCost,
         total,
@@ -177,6 +195,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({
+      order_id: orderId,
       preference_id: preference.id,
       init_point: preference.init_point,
       sandbox_init_point: preference.sandbox_init_point,

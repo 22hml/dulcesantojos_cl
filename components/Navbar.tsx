@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { useCart } from "@/context/CartContext";
 import { useShopMode, type ShopMode } from "@/context/ShopModeContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -66,14 +68,9 @@ export default function Navbar() {
         <Link
           href="/"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="shrink-0 flex flex-col leading-none"
+          className="shrink-0"
         >
-          <span className="font-bebas text-lg tracking-widest text-theme sm:text-xl">
-            DULCES
-          </span>
-          <span className="font-script -mt-0.5 text-xl leading-[0.9] text-gold sm:text-[1.45rem]">
-            Antojos
-          </span>
+          <BrandLogo height={44} />
         </Link>
 
         <div className="hidden flex-1 justify-center px-4 md:flex md:max-w-md lg:max-w-lg">
@@ -95,9 +92,11 @@ export default function Navbar() {
               href={`https://wa.me/${waNumber}?text=${encodeURIComponent("Hola! Quiero consultar sobre Dulces Antojos 🎂")}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden items-center gap-1 rounded border border-wa/30 px-2.5 py-2 font-outfit text-[0.7rem] font-semibold uppercase text-wa transition hover:border-wa hover:bg-wa/10 lg:flex"
+              className="flex h-9 w-9 items-center justify-center rounded border border-wa/30 text-wa transition hover:border-wa hover:bg-wa/10"
+              aria-label="WhatsApp"
+              title="WhatsApp"
             >
-              WA
+              <WhatsAppIcon size={20} />
             </a>
           )}
           <button
@@ -108,7 +107,7 @@ export default function Navbar() {
             <span className="hidden xs:inline sm:inline">🛒</span>
             <span className="sm:hidden">🛒</span>
             <span className="hidden min-[380px]:inline">Carrito</span>
-            <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-black px-1 text-[0.65rem] font-bold text-gold">
+            <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-theme-card border border-theme px-1 text-[0.65rem] font-bold text-gold">
               {itemCount}
             </span>
           </button>

@@ -33,10 +33,10 @@ export default function FeaturesBar() {
         >
           <span className="shrink-0 text-[1.7rem]">{f.icon}</span>
           <div>
-            <h4 className="mb-1 text-[0.82rem] font-semibold tracking-wide text-white">
+            <h4 className="mb-1 text-[0.82rem] font-semibold tracking-wide text-theme">
               {f.title}
             </h4>
-            <p className="text-[0.76rem] font-light leading-snug text-gray">
+            <p className="text-[0.76rem] font-light leading-snug text-theme-muted">
               {f.desc}
             </p>
           </div>

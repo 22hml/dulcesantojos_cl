@@ -13,8 +13,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No hay archivo" }, { status: 400 });
   }
 
+  const folderRaw = formData.get("folder");
+  const folder =
+    typeof folderRaw === "string" && /^[a-z0-9_-]+$/i.test(folderRaw)
+      ? folderRaw
+      : "";
   const ext = file.name.split(".").pop() || "jpg";
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const path = folder ? `${folder}/${fileName}` : fileName;
   const buffer = Buffer.from(await file.arrayBuffer());
 
   const supabase = createAdminClient();

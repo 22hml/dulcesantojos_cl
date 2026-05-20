@@ -1,43 +1,63 @@
 "use client";
 
+import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useCart } from "@/context/CartContext";
-import { getProductEmoji } from "@/lib/product-emoji";
+import CartItemThumb from "@/components/CartItemThumb";
 
 export default function AddToCartModal() {
   const { addedModal, closeAddedModal, openCart } = useCart();
 
+  useEffect(() => {
+    if (!addedModal) return;
+    const t = window.setTimeout(closeAddedModal, 5000);
+    return () => window.clearTimeout(t);
+  }, [addedModal, closeAddedModal]);
+
   if (!addedModal) return null;
 
   const { product, qty } = addedModal;
-  const emoji = getProductEmoji(product);
 
-  return (
-    <div
-      className="fixed inset-0 z-[800] flex items-center justify-center p-4"
-      style={{ background: "var(--overlay)" }}
-      onClick={closeAddedModal}
-    >
+  return createPortal(
+    <div className="pointer-events-none fixed inset-0 z-[750] p-3 sm:p-4">
+      <button
+        type="button"
+        className="pointer-events-auto absolute inset-0"
+        aria-label="Cerrar"
+        onClick={closeAddedModal}
+      />
       <div
-        role="dialog"
-        aria-modal="true"
-        className="animate-fade-in w-full max-w-sm rounded-lg border border-theme bg-theme-card p-6 shadow-2xl"
+        role="status"
+        className="animate-toast-in pointer-events-auto absolute bottom-20 right-3 w-[min(100%,280px)] rounded-lg border border-theme bg-theme-card p-3 shadow-xl sm:bottom-6 sm:right-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="text-center text-4xl">{emoji}</p>
-        <h3 className="mt-3 text-center font-bebas text-2xl tracking-wide text-theme">
-          ¡Agregado al carrito!
-        </h3>
-        <p className="mt-2 text-center text-sm text-theme-muted">
-          <span className="font-semibold text-gold">{product.name}</span>
-          {qty > 1 ? ` · ${qty} unidades` : ""}
-        </p>
-        <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+        <div className="flex items-center gap-3">
+          <CartItemThumb item={product} size={44} />
+          <div className="min-w-0 flex-1">
+            <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-gold">
+              Agregado al carrito
+            </p>
+            <p className="truncate text-sm font-semibold text-theme">
+              {product.name}
+              {qty > 1 ? ` · ×${qty}` : ""}
+            </p>
+          </div>
           <button
             type="button"
             onClick={closeAddedModal}
-            className="flex-1 rounded border border-theme bg-transparent py-3 font-outfit text-xs font-semibold uppercase tracking-wider text-theme-muted transition hover:border-gold hover:text-gold"
+            className="shrink-0 text-theme-muted hover:text-theme"
+            aria-label="Cerrar"
           >
-            Seguir comprando
+            ✕
+          </button>
+        </div>
+        <div className="mt-2.5 flex gap-2">
+          <button
+            type="button"
+            onClick={closeAddedModal}
+            className="flex-1 rounded border border-theme py-2 font-outfit text-[0.65rem] font-semibold uppercase tracking-wide text-theme-muted transition hover:border-gold hover:text-gold"
+          >
+            Seguir
           </button>
           <button
             type="button"
@@ -45,12 +65,14 @@ export default function AddToCartModal() {
               closeAddedModal();
               openCart();
             }}
-            className="flex-1 rounded bg-gold py-3 font-outfit text-xs font-bold uppercase tracking-wider text-black transition hover:bg-gold-light"
+            className="flex-1 rounded bg-gold py-2 font-outfit text-[0.65rem] font-bold uppercase tracking-wide text-black transition hover:bg-gold-light"
           >
             Ver carrito
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
+

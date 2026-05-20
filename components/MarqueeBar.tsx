@@ -7,7 +7,7 @@ const ITEMS = [
   "Cajas Premium",
   "Packaging Repostería",
   "Venta por Mayor",
-  "Despacho Santiago",
+  "Despacho Santiago y regiones",
   "Mercado Pago",
 ];
 
