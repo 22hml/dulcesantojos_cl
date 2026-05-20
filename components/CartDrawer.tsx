@@ -7,12 +7,36 @@ import { buildOrderWhatsAppUrl } from "@/lib/order-whatsapp";
 import CartItemThumb from "@/components/CartItemThumb";
 import ComunaSelect from "@/components/ComunaSelect";
 import { FALLBACK_DELIVERY_ZONES } from "@/lib/fallback-zones";
-import type { DeliveryZone } from "@/types";
+import type { Cart, DeliveryZone } from "@/types";
 
 const waNumber = process.env.NEXT_PUBLIC_WA_NUMBER;
 
 const inputClass =
   "w-full rounded border border-theme bg-theme-input px-4 py-2.5 font-outfit text-sm text-theme placeholder:text-theme-muted focus:border-gold focus:outline-none";
+
+type CustomerField = "name" | "phone" | "comuna" | "address";
+
+const FIELD_IDS: Record<CustomerField, string> = {
+  name: "cart-field-name",
+  phone: "cart-field-phone",
+  comuna: "cart-field-comuna",
+  address: "cart-field-address",
+};
+
+function focusCartField(field: CustomerField) {
+  requestAnimationFrame(() => {
+    const el = document.getElementById(FIELD_IDS[field]);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    const focusable =
+      el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement
+        ? el
+        : el.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+            "input, textarea"
+          );
+    focusable?.focus();
+  });
+}
 
 function CardIcon() {
   return (
@@ -41,7 +65,8 @@ function CardIcon() {
 }
 
 export default function CartDrawer() {
-  const { cart, isOpen, closeCart, subtotal, setQty, clearCart } = useCart();
+  const { cart, isOpen, closeCart, subtotal, setQty, applyStockSnapshot } =
+    useCart();
 
   const [deliveryType, setDeliveryType] = useState<"despacho" | "retiro">(
     "retiro"
@@ -53,7 +78,9 @@ export default function CartDrawer() {
   const [observaciones, setObservaciones] = useState("");
   const [zones, setZones] = useState<DeliveryZone[]>(FALLBACK_DELIVERY_ZONES);
   const [loading, setLoading] = useState(false);
+  const [waLoading, setWaLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldError, setFieldError] = useState<CustomerField | null>(null);
 
   useEffect(() => {
     fetch("/api/delivery-zones")
@@ -79,35 +106,146 @@ export default function CartDrawer() {
       ? `${streetAddress.trim()}, ${comuna}`
       : "";
 
-  async function handleCheckout() {
+  function fieldInputClass(field: CustomerField) {
+    return fieldError === field
+      ? `${inputClass} border-red-500 ring-1 ring-red-500/40`
+      : inputClass;
+  }
+
+  function showFieldError(field: CustomerField, message: string) {
+    setFieldError(field);
+    setError(message);
+    focusCartField(field);
+  }
+
+  function validateCustomerFields(): boolean {
+    setFieldError(null);
     if (!customerName.trim()) {
-      setError("Ingresa tu nombre para el pedido");
-      return;
+      showFieldError("name", "Ingresa tu nombre para el pedido");
+      return false;
     }
     if (!customerPhone.trim()) {
-      setError("Ingresa tu teléfono para coordinar el pedido");
-      return;
+      showFieldError("phone", "Ingresa tu teléfono para coordinar el pedido");
+      return false;
     }
     if (deliveryType === "despacho") {
       if (!comuna) {
-        setError("Selecciona una comuna");
-        return;
+        showFieldError("comuna", "Selecciona una comuna");
+        return false;
       }
       if (!streetAddress.trim()) {
-        setError("Ingresa calle, número y depto/casa");
-        return;
+        showFieldError("address", "Ingresa calle, número y depto/casa");
+        return false;
       }
     }
+    return true;
+  }
+
+  function syncStockFromApi(products: Record<string, unknown> | undefined) {
+    if (!products) return;
+    const snapshot: Record<
+      number,
+      { stock: number; active?: boolean; price?: number; name?: string }
+    > = {};
+    for (const [id, raw] of Object.entries(products)) {
+      const p = raw as {
+        stock?: number;
+        active?: boolean;
+        price?: number;
+        name?: string;
+      };
+      if (typeof p.stock === "number") {
+        snapshot[Number(id)] = {
+          stock: p.stock,
+          active: p.active,
+          price: p.price,
+          name: p.name,
+        };
+      }
+    }
+    if (Object.keys(snapshot).length > 0) applyStockSnapshot(snapshot);
+  }
+
+  async function validateAndSyncStock(): Promise<Cart | null> {
+    const currentItems = Object.values(cart);
+    if (currentItems.length === 0) {
+      setError("Tu pedido está vacío");
+      return null;
+    }
+
+    const res = await fetch("/api/cart/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: currentItems.map((i) => ({
+          id: i.id,
+          qty: i.qty,
+          name: i.name,
+        })),
+      }),
+    });
+
+    const data = await res.json();
+    syncStockFromApi(data.products);
+
+    if (!res.ok) {
+      setError(data.error || "No se pudo validar el stock");
+      return null;
+    }
+
+    if (!data.ok) {
+      setError(
+        data.message ||
+          "Algunos productos ya no tienen stock suficiente. Revisa las cantidades."
+      );
+      return null;
+    }
+
+    const synced: Cart = {};
+    for (const item of currentItems) {
+      const p = data.products?.[item.id] as
+        | { stock: number; active?: boolean; price?: number; name?: string }
+        | undefined;
+      if (!p?.active || p.stock <= 0) continue;
+      synced[item.id] = {
+        ...item,
+        stock: p.stock,
+        qty: Math.min(item.qty, p.stock),
+        ...(typeof p.price === "number" ? { price: p.price } : {}),
+        ...(p.name ? { name: p.name } : {}),
+      };
+    }
+
+    if (Object.keys(synced).length === 0) {
+      setError("Tu pedido está vacío");
+      return null;
+    }
+
+    return synced;
+  }
+
+  async function handleCheckout() {
+    if (!validateCustomerFields()) return;
 
     setLoading(true);
     setError(null);
 
     try {
+      const syncedCart = await validateAndSyncStock();
+      if (!syncedCart) return;
+
+      const syncedItems = Object.values(syncedCart);
+      const syncedSubtotal = syncedItems.reduce(
+        (s, i) => s + i.price * i.qty,
+        0
+      );
+      const syncedTotal = syncedSubtotal + deliveryCost;
+
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          cart,
+          cart: syncedCart,
           deliveryType,
           address: streetAddress.trim(),
           comuna,
@@ -122,6 +260,7 @@ export default function CartDrawer() {
 
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 409) syncStockFromApi(data.products);
         const msg = [data.error, data.hint, data.detail]
           .filter(Boolean)
           .join(" — ");
@@ -146,10 +285,10 @@ export default function CartDrawer() {
               customer_name: customerName.trim(),
               customer_phone: customerPhone.trim(),
               observaciones: observaciones.trim() || null,
-              subtotal,
+              subtotal: syncedSubtotal,
               delivery_cost: deliveryCost,
-              total,
-              items: items.map((i) => ({
+              total: syncedTotal,
+              items: syncedItems.map((i) => ({
                 name: i.name,
                 qty: i.qty,
                 price: i.price,
@@ -165,7 +304,6 @@ export default function CartDrawer() {
             }
           }
         }
-        clearCart();
         window.location.href = checkoutUrl;
       } else {
         throw new Error(
@@ -180,26 +318,45 @@ export default function CartDrawer() {
     }
   }
 
-  function buildWhatsAppLink() {
-    if (!waNumber || items.length === 0) return "#";
-    return (
-      buildOrderWhatsAppUrl({
+  async function handleWhatsApp() {
+    if (!waNumber) return;
+    if (!validateCustomerFields()) return;
+
+    setWaLoading(true);
+    setError(null);
+
+    try {
+      const syncedCart = await validateAndSyncStock();
+      if (!syncedCart) return;
+
+      const freshItems = Object.values(syncedCart);
+      const freshSubtotal = freshItems.reduce(
+        (s, i) => s + i.price * i.qty,
+        0
+      );
+      const freshTotal = freshSubtotal + deliveryCost;
+
+      const url = buildOrderWhatsAppUrl({
         delivery_type: deliveryType,
         address: fullAddress || null,
         comuna: deliveryType === "despacho" ? comuna : null,
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
         observaciones: observaciones.trim() || null,
-        subtotal,
+        subtotal: freshSubtotal,
         delivery_cost: deliveryCost,
-        total,
-        items: items.map((i) => ({
+        total: freshTotal,
+        items: freshItems.map((i) => ({
           name: i.name,
           qty: i.qty,
           price: i.price,
         })),
-      }) ?? "#"
-    );
+      });
+
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
+    } finally {
+      setWaLoading(false);
+    }
   }
 
   if (!isOpen) return null;
@@ -210,7 +367,18 @@ export default function CartDrawer() {
       style={{ background: "var(--overlay)" }}
       onClick={(e) => e.target === e.currentTarget && closeCart()}
     >
-      <aside className="flex h-full w-full max-w-[440px] animate-[dIn_0.3s_ease] flex-col border-l border-theme bg-theme-elevated">
+      <aside className="relative flex h-full w-full max-w-[440px] animate-[dIn_0.3s_ease] flex-col border-l border-theme bg-theme-elevated">
+        {loading && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-theme-elevated/95 px-6 text-center backdrop-blur-sm">
+            <span className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-gold border-t-transparent" />
+            <p className="font-outfit text-sm font-semibold text-theme">
+              Redirigiendo a Mercado Pago…
+            </p>
+            <p className="text-xs text-theme-muted">
+              No cierres esta ventana
+            </p>
+          </div>
+        )}
         <div className="flex shrink-0 items-center justify-between border-b border-theme px-5 py-5 sm:px-8 sm:py-7">
           <h2 className="font-bebas text-2xl tracking-wider text-theme">
             MI <span className="text-gold">PEDIDO</span>
@@ -323,22 +491,32 @@ export default function CartDrawer() {
                     <label className="block text-[0.72rem] uppercase tracking-wider text-theme-muted">
                       Comuna <span className="text-red-500">*</span>
                     </label>
-                    <ComunaSelect
-                      zones={zones}
-                      value={comuna}
-                      onChange={setComuna}
-                      inputClassName={inputClass}
-                    />
+                    <div id="cart-field-comuna">
+                      <ComunaSelect
+                        zones={zones}
+                        value={comuna}
+                        onChange={(v) => {
+                          setComuna(v);
+                          if (fieldError === "comuna") setFieldError(null);
+                        }}
+                        inputClassName={fieldInputClass("comuna")}
+                        id={FIELD_IDS.comuna}
+                      />
+                    </div>
                     <label className="block text-[0.72rem] uppercase tracking-wider text-theme-muted">
                       Dirección (calle, número, depto){" "}
                       <span className="text-red-500">*</span>
                     </label>
                     <input
+                      id="cart-field-address"
                       type="text"
                       placeholder="Ej: Av. Providencia 1234, Depto 501"
                       value={streetAddress}
-                      onChange={(e) => setStreetAddress(e.target.value)}
-                      className={inputClass}
+                      onChange={(e) => {
+                        setStreetAddress(e.target.value);
+                        if (fieldError === "address") setFieldError(null);
+                      }}
+                      className={fieldInputClass("address")}
                     />
                   </div>
                 ) : (
@@ -356,22 +534,30 @@ export default function CartDrawer() {
                   Nombre <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="cart-field-name"
                   type="text"
                   placeholder="Tu nombre completo"
                   value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className={inputClass}
+                  onChange={(e) => {
+                    setCustomerName(e.target.value);
+                    if (fieldError === "name") setFieldError(null);
+                  }}
+                  className={fieldInputClass("name")}
                   required
                 />
                 <label className="mb-1 mt-3 block text-[0.72rem] text-theme-muted">
                   Teléfono WhatsApp <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="cart-field-phone"
                   type="tel"
                   placeholder="Ej: +56 9 1234 5678"
                   value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  className={inputClass}
+                  onChange={(e) => {
+                    setCustomerPhone(e.target.value);
+                    if (fieldError === "phone") setFieldError(null);
+                  }}
+                  className={fieldInputClass("phone")}
                   required
                 />
                 <label className="mb-1 mt-3 block text-[0.72rem] text-theme-muted">
@@ -441,14 +627,14 @@ export default function CartDrawer() {
             </button>
 
             {waNumber && (
-              <a
-                href={buildWhatsAppLink()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded border border-wa/30 py-3 font-outfit text-[0.75rem] font-semibold uppercase tracking-wider text-wa transition hover:border-wa hover:bg-wa/10 sm:text-[0.8rem]"
+              <button
+                type="button"
+                disabled={loading || waLoading}
+                onClick={() => void handleWhatsApp()}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded border border-wa/30 py-3 font-outfit text-[0.75rem] font-semibold uppercase tracking-wider text-wa transition hover:border-wa hover:bg-wa/10 disabled:opacity-60 sm:text-[0.8rem]"
               >
-                Enviar pedido por WhatsApp
-              </a>
+                {waLoading ? "Validando stock…" : "Enviar pedido por WhatsApp"}
+              </button>
             )}
           </div>
         )}

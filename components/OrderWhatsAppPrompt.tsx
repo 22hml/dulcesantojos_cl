@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import WhatsAppIcon from "@/components/WhatsAppIcon";
+import { useCart } from "@/context/CartContext";
 
 type Props = {
   variant: "success" | "pending";
@@ -19,6 +20,18 @@ export default function OrderWhatsAppPrompt({
 }: Props) {
   const [whatsappUrl, setWhatsappUrl] = useState(initialUrl);
   const [sentHint, setSentHint] = useState(false);
+  const { clearCart } = useCart();
+
+  useEffect(() => {
+    if (variant === "success") {
+      clearCart();
+      try {
+        sessionStorage.removeItem("dulcesantojos_mp_wa_url");
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [variant, clearCart]);
 
   useEffect(() => {
     if (initialUrl) return;

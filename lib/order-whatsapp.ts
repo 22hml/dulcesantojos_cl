@@ -1,5 +1,20 @@
 import { formatCLP } from "@/lib/format";
 
+/** Emojis como escapes Unicode (evita corrupción de encoding en build/Windows). */
+const E = {
+  cake: "\u{1F382}",
+  check: "\u{2705}",
+  pending: "\u{23F3}",
+  card: "\u{1F4B3}",
+  delivery: "\u{1F6F5}",
+  store: "\u{1F3EA}",
+  pin: "\u{1F4CD}",
+  person: "\u{1F464}",
+  phone: "\u{1F4F1}",
+  note: "\u{1F4DD}",
+  bullet: "\u2022",
+} as const;
+
 export type OrderWhatsAppInput = {
   id?: number;
   delivery_type: "despacho" | "retiro";
@@ -26,34 +41,34 @@ export function buildOrderWhatsAppMessage(
 ): string {
   const productLines = order.items.map(
     (i) =>
-      `• ${i.name} ×${i.qty} — ${formatCLP(i.price)} c/u = ${formatCLP(i.price * i.qty)}`
+      `${E.bullet} ${i.name} x${i.qty} - ${formatCLP(i.price)} c/u = ${formatCLP(i.price * i.qty)}`
   );
 
   const entregaLine =
     order.delivery_type === "despacho"
-      ? `🛵 *Despacho* a ${order.comuna || "(comuna)"}`
-      : "🏪 *Retiro* en tienda";
+      ? `${E.delivery} *Despacho* a ${order.comuna || "(comuna)"}`
+      : `${E.store} *Retiro* en tienda`;
 
   const addressLine =
     order.delivery_type === "despacho" && order.address
-      ? `📍 *Dirección:* ${order.address}`
+      ? `${E.pin} *Direccion:* ${order.address}`
       : null;
 
   const despachoLine =
     order.delivery_type === "despacho"
-      ? `🛵 *Costo despacho (${order.comuna || "—"}):* ${formatCLP(order.delivery_cost)}`
-      : "🛵 *Despacho:* Gratis (retiro)";
+      ? `${E.delivery} *Costo despacho (${order.comuna || "-"}):* ${formatCLP(order.delivery_cost)}`
+      : `${E.delivery} *Despacho:* Gratis (retiro)`;
 
-  let header = "🎂 *Hola Dulces Antojos!* Quiero hacer un pedido:";
+  let header = `${E.cake} *Hola Dulces Antojos!* Quiero hacer un pedido:`;
   if (opts?.mercadoPago && order.id) {
-    header = `🎂 *Hola Dulces Antojos!*\n✅ *Pedido pagado con Mercado Pago* — #${order.id}`;
+    header = `${E.cake} *Hola Dulces Antojos!*\n${E.check} *Pedido pagado con Mercado Pago* - #${order.id}`;
     if (opts.paymentId) {
-      header += `\n💳 *ID pago MP:* ${opts.paymentId}`;
+      header += `\n${E.card} *ID pago MP:* ${opts.paymentId}`;
     }
   } else if (opts?.pagoPendiente && order.id) {
-    header = `🎂 *Hola Dulces Antojos!*\n⏳ *Pago Mercado Pago en proceso* — pedido #${order.id}`;
+    header = `${E.cake} *Hola Dulces Antojos!*\n${E.pending} *Pago Mercado Pago en proceso* - pedido #${order.id}`;
   } else if (order.id) {
-    header = `🎂 *Hola Dulces Antojos!* Pedido #${order.id}:`;
+    header = `${E.cake} *Hola Dulces Antojos!* Pedido #${order.id}:`;
   }
 
   const parts = [
@@ -69,13 +84,13 @@ export function buildOrderWhatsAppMessage(
     entregaLine,
     addressLine,
     order.customer_name?.trim()
-      ? `👤 *Nombre:* ${order.customer_name.trim()}`
+      ? `${E.person} *Nombre:* ${order.customer_name.trim()}`
       : null,
     order.customer_phone?.trim()
-      ? `📱 *Teléfono:* ${order.customer_phone.trim()}`
+      ? `${E.phone} *Telefono:* ${order.customer_phone.trim()}`
       : null,
     order.observaciones?.trim()
-      ? `📝 *Observaciones:* ${order.observaciones.trim()}`
+      ? `${E.note} *Observaciones:* ${order.observaciones.trim()}`
       : null,
     "",
     opts?.mercadoPago || opts?.pagoPendiente

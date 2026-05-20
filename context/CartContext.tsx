@@ -21,6 +21,12 @@ type CartContextValue = {
   addItem: (product: Product, options?: { openDrawer?: boolean }) => void;
   removeItem: (productId: number) => void;
   setQty: (productId: number, qty: number) => void;
+  applyStockSnapshot: (
+    products: Record<
+      number,
+      { stock: number; active?: boolean; price?: number; name?: string }
+    >
+  ) => void;
   clearCart: () => void;
   isOpen: boolean;
   openCart: () => void;
@@ -80,6 +86,41 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const applyStockSnapshot = useCallback(
+    (
+      products: Record<
+        number,
+        { stock: number; active?: boolean; price?: number; name?: string }
+      >
+    ) => {
+      setCart((prev) => {
+        const next = { ...prev };
+        for (const [idStr, info] of Object.entries(products)) {
+          const id = Number(idStr);
+          const item = next[id];
+          if (!item) continue;
+
+          if (info.active === false || info.stock <= 0) {
+            delete next[id];
+            continue;
+          }
+
+          const stock = info.stock;
+          const qty = Math.min(item.qty, stock);
+          next[id] = {
+            ...item,
+            stock,
+            qty,
+            ...(typeof info.price === "number" ? { price: info.price } : {}),
+            ...(info.name ? { name: info.name } : {}),
+          };
+        }
+        return next;
+      });
+    },
+    []
+  );
+
   const clearCart = useCallback(() => setCart({}), []);
   const closeAddedModal = useCallback(() => setAddedModal(null), []);
 
@@ -101,6 +142,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       addItem,
       removeItem,
       setQty,
+      applyStockSnapshot,
       clearCart,
       isOpen,
       openCart: () => {
@@ -118,6 +160,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       addItem,
       removeItem,
       setQty,
+      applyStockSnapshot,
       clearCart,
       isOpen,
       addedModal,

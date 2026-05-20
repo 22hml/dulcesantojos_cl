@@ -9,6 +9,7 @@ type Props = {
   value: string;
   onChange: (comuna: string) => void;
   inputClassName?: string;
+  id?: string;
 };
 
 export default function ComunaSelect({
@@ -16,6 +17,7 @@ export default function ComunaSelect({
   value,
   onChange,
   inputClassName = "",
+  id,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -57,6 +59,7 @@ export default function ComunaSelect({
   return (
     <div ref={rootRef} className="relative">
       <input
+        id={id}
         type="text"
         role="combobox"
         aria-expanded={open}

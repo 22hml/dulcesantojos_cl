@@ -8,7 +8,16 @@ import {
   resolveMpBackBase,
   shouldUseMpSandbox,
 } from "@/lib/mp-checkout-url";
-import { serviceInsertOrder, serviceRpc, serviceUpdateOrder } from "@/lib/supabase-service";
+import {
+  buildStockValidation,
+  formatStockIssuesMessage,
+} from "@/lib/cart-stock";
+import {
+  serviceGetProductsByIds,
+  serviceInsertOrder,
+  serviceRpc,
+  serviceUpdateOrder,
+} from "@/lib/supabase-service";
 import type { CartItem } from "@/types";
 
 export async function POST(req: Request) {
@@ -57,13 +66,26 @@ export async function POST(req: Request) {
       );
     }
 
+    const dbProducts = await serviceGetProductsByIds(items.map((i) => i.id));
+    const stockCheck = buildStockValidation(
+      items.map((i) => ({ id: i.id, qty: i.qty, name: i.name })),
+      dbProducts
+    );
+    if (!stockCheck.ok) {
+      return NextResponse.json(
+        {
+          error: formatStockIssuesMessage(stockCheck.issues),
+          stockIssues: stockCheck.issues,
+          products: stockCheck.productsById,
+        },
+        { status: 409 }
+      );
+    }
+
+    const priceById = Object.fromEntries(dbProducts.map((p) => [p.id, p.price]));
     for (const item of items) {
-      if (item.qty > item.stock) {
-        return NextResponse.json(
-          { error: `Sin stock suficiente para ${item.name}` },
-          { status: 400 }
-        );
-      }
+      const livePrice = priceById[item.id];
+      if (typeof livePrice === "number") item.price = livePrice;
     }
 
     let deliveryCost = 0;

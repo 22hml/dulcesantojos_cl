@@ -52,6 +52,37 @@ export async function serviceRpc<T>(
   return data as T;
 }
 
+export async function serviceGetProductsByIds(ids: number[]) {
+  if (ids.length === 0) return [];
+
+  const { url, key } = getServiceConfig();
+  const list = Array.from(new Set(ids)).join(",");
+  const res = await fetch(
+    `${url}/rest/v1/products?id=in.(${list})&select=id,name,stock,active,price`,
+    {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+      },
+      cache: "no-store",
+    }
+  );
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const err = data as { message?: string };
+    throw new Error(err?.message || `No se pudo leer productos (${res.status})`);
+  }
+
+  return (await res.json()) as {
+    id: number;
+    name: string;
+    stock: number;
+    active: boolean;
+    price: number;
+  }[];
+}
+
 export async function serviceInsertOrder(row: Record<string, unknown>) {
   const { url, key } = getServiceConfig();
   const res = await fetch(`${url}/rest/v1/orders`, {
