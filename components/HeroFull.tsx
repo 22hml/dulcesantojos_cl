@@ -89,31 +89,31 @@ export default function HeroFull() {
 
   return (
     <section
-      className="relative flex max-h-[85vh] min-h-0 items-start overflow-hidden border-b border-border pb-2 pt-[7.5rem] md:pt-[68px]"
+      className="relative border-b border-border pb-8 pt-[7.5rem] sm:pb-10 md:pt-[7.25rem] lg:flex lg:max-h-[85vh] lg:min-h-0 lg:items-start lg:overflow-hidden lg:pb-2 lg:pt-[68px]"
       style={backgroundStyle}
     >
-      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-6 px-[5%] py-6 sm:py-8 lg:grid-cols-2 lg:gap-10 lg:py-8">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-[5%] py-5 sm:gap-6 sm:py-8 lg:grid lg:grid-cols-2 lg:items-center lg:gap-10 lg:py-8">
         <div className="min-w-0">
-          <span className="mb-4 inline-flex rounded-sm border border-gold/25 px-4 py-1.5 text-[0.68rem] font-medium uppercase tracking-[0.18em] text-gold">
+          <span className="mb-3 inline-flex rounded-sm border border-gold/25 px-3 py-1 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-gold sm:mb-4 sm:px-4 sm:py-1.5 sm:text-[0.68rem]">
             Pastelería · Desde 2015
           </span>
-          <h1 className="mb-4">
-            <span className="font-bebas block text-[clamp(4rem,8vw,7rem)] leading-[0.88] tracking-wide text-white">
+          <h1 className="mb-3 sm:mb-4">
+            <span className="font-bebas block text-[clamp(2.75rem,11vw,7rem)] leading-[0.9] tracking-wide text-white sm:leading-[0.88]">
               DULCES
             </span>
-            <span className="font-script block text-[clamp(3rem,6vw,5.5rem)] leading-none text-gold">
+            <span className="font-script block text-[clamp(2.25rem,8vw,5.5rem)] leading-none text-gold">
               Antojos
             </span>
           </h1>
-          <p className="mb-5 max-w-md text-[0.9rem] font-light leading-relaxed text-white/70">
+          <p className="mb-4 max-w-md text-[0.85rem] font-light leading-relaxed text-white/70 sm:mb-5 sm:text-[0.9rem]">
             Tu celebración merece lo mejor. Pastelería con despacho en Santiago y regiones.
             Cajas de torta premium para reposteras. Paga con Mercado Pago.
           </p>
-          <div className="mb-6 flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2.5 sm:gap-3">
             <button
               type="button"
               onClick={scrollToCatalog}
-              className="rounded bg-gold px-8 py-3.5 font-outfit text-[0.85rem] font-bold uppercase tracking-widest text-black transition hover:bg-gold-light"
+              className="rounded bg-gold px-6 py-3 font-outfit text-[0.8rem] font-bold uppercase tracking-widest text-black transition hover:bg-gold-light sm:px-8 sm:py-3.5 sm:text-[0.85rem]"
             >
               Ver catálogo
             </button>
@@ -122,13 +122,13 @@ export default function HeroFull() {
                 href={`https://wa.me/${waNumber}?text=${encodeURIComponent("Hola! Quiero consultar sobre Dulces Antojos 🎂")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded border border-wa/50 bg-transparent px-8 py-3.5 font-outfit text-[0.85rem] font-bold uppercase tracking-widest text-wa transition hover:border-wa hover:bg-wa/10"
+                className="rounded border border-wa/50 bg-transparent px-6 py-3 font-outfit text-[0.8rem] font-bold uppercase tracking-widest text-wa transition hover:border-wa hover:bg-wa/10 sm:px-8 sm:py-3.5 sm:text-[0.85rem]"
               >
                 WhatsApp
               </a>
             )}
           </div>
-          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.72rem] font-medium text-white/55">
+          <p className="mt-4 hidden flex-wrap items-center gap-x-2 gap-y-1 text-[0.72rem] font-medium text-white/55 lg:flex">
             {STATS.map((stat, i) => (
               <span key={stat} className="inline-flex items-center gap-2">
                 {i > 0 && <span className="text-gold/35">·</span>}
@@ -138,10 +138,20 @@ export default function HeroFull() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          {slots.map((item) => (
-            <HeroCell key={item.key} item={item} />
-          ))}
+        <div className="mx-auto w-full max-w-[min(100%,22rem)] shrink-0 sm:max-w-md lg:max-w-none lg:mx-0">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+            {slots.map((item) => (
+              <HeroCell key={item.key} item={item} />
+            ))}
+          </div>
+          <p className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-[0.68rem] font-medium text-white/55 lg:hidden">
+            {STATS.map((stat, i) => (
+              <span key={stat} className="inline-flex items-center gap-2">
+                {i > 0 && <span className="text-gold/35">·</span>}
+                {stat}
+              </span>
+            ))}
+          </p>
         </div>
       </div>
     </section>
@@ -166,7 +176,7 @@ function HeroCell({ item }: { item: HeroGridItem }) {
             alt={item.alt}
             fill
             className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
-            sizes="200px"
+            sizes="(max-width: 1024px) 45vw, 200px"
           />
           {item.caption && (
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 pb-2 pt-6">

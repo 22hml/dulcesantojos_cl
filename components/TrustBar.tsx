@@ -1,7 +1,7 @@
 const ITEMS = [
-  { icon: "🎂", label: "+5000 pedidos hechos" },
+  { icon: "🎂", label: "+8000 pedidos hechos" },
   { icon: "🏆", label: "+10 años de experiencia" },
-  { icon: "🚚", label: "Despacho mismo día" },
+  { icon: "🚚", label: "Despacho a regiones" },
   { icon: "🔒", label: "Pago seguro" },
 ];
 
