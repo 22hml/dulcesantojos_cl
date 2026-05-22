@@ -1,5 +1,6 @@
 import { fetchMpPayment } from "@/lib/mp-payment";
-import { serviceRpc } from "@/lib/supabase-service";
+import { sendOrderPaidEmails } from "@/lib/order-email";
+import { serviceGetOrder, serviceRpc } from "@/lib/supabase-service";
 
 /** Confirma pedido si el pago está approved (idempotente, estilo goncy). */
 export async function confirmOrderFromPayment(
@@ -18,11 +19,32 @@ export async function confirmOrderFromPayment(
     return { ok: false };
   }
 
+  let wasAlreadyPaid = false;
   try {
-    await serviceRpc("mark_order_paid", {
+    const currentOrder = await serviceGetOrder(orderId);
+    wasAlreadyPaid = currentOrder?.status === "paid";
+  } catch (e) {
+    console.warn("No se pudo leer estado previo del pedido:", e);
+  }
+
+  try {
+    const markResult = await serviceRpc<boolean | null>("mark_order_paid", {
       p_order_id: orderId,
       p_payment_id: String(paymentId),
     });
+
+    const shouldSendEmails = markResult === true || (!markResult && !wasAlreadyPaid);
+    if (shouldSendEmails) {
+      try {
+        const paidOrder = await serviceGetOrder(orderId);
+        if (paidOrder?.status === "paid") {
+          await sendOrderPaidEmails(paidOrder, String(paymentId));
+        }
+      } catch (emailError) {
+        console.error("No se pudieron enviar correos del pedido:", emailError);
+      }
+    }
+
     return { ok: true, orderId };
   } catch (e) {
     console.error("mark_order_paid:", e);

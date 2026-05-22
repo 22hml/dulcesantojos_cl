@@ -70,6 +70,14 @@ export async function POST(req: Request) {
       );
     }
 
+    const normalizedCustomerEmail = customerEmail?.trim() || "";
+    if (!normalizedCustomerEmail || !isValidEmail(normalizedCustomerEmail)) {
+      return NextResponse.json(
+        { error: "Ingresa un correo electrónico válido" },
+        { status: 400 }
+      );
+    }
+
     const dbProducts = await serviceGetProductsByIds(items.map((i) => i.id));
     const stockCheck = buildStockValidation(
       items.map((i) => ({ id: i.id, qty: i.qty, name: i.name })),
@@ -127,12 +135,6 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
-      if (!customerEmail?.trim() || !isValidEmail(customerEmail)) {
-        return NextResponse.json(
-          { error: "Ingresa un correo electrónico válido" },
-          { status: 400 }
-        );
-      }
       fullAddress = address.trim();
       deliveryCost = 0;
     }
@@ -164,8 +166,7 @@ export async function POST(req: Request) {
         p_total: total,
         p_items: orderItems,
         p_observaciones: observaciones?.trim() || null,
-        p_customer_email:
-          deliveryType === "region" ? customerEmail?.trim() : null,
+        p_customer_email: normalizedCustomerEmail,
       });
     } catch (rpcErr) {
       console.warn("RPC create_order falló, insert directo:", rpcErr);
@@ -176,8 +177,7 @@ export async function POST(req: Request) {
         comuna: deliveryType === "despacho" ? comuna?.trim() : null,
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
-        customer_email:
-          deliveryType === "region" ? customerEmail?.trim() : null,
+        customer_email: normalizedCustomerEmail,
         observaciones: observaciones?.trim() || null,
         subtotal,
         delivery_cost: deliveryCost,

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔔 Nuevo pedido — Dulces Antojos Admin</title>
+</head>
+<body style="margin:0;padding:0;background:#050505;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#050505;padding:40px 20px;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+  <!-- HEADER ADMIN -->
+  <tr>
+    <td style="background:#0d0d0d;border:1px solid rgba(232,168,32,0.3);border-bottom:none;border-radius:12px 12px 0 0;padding:24px 40px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td>
+            <span style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#555;">Panel Admin</span><br>
+            <span style="font-family:Georgia,serif;font-size:20px;color:#ffffff;font-weight:600;">DULCES</span>
+            <span style="font-family:Georgia,serif;font-size:22px;color:#E8A820;font-style:italic;"> Antojos</span>
+          </td>
+          <td align="right">
+            <span style="background:#E8A820;color:#000;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:6px 14px;border-radius:20px;">
+              🔔 Nuevo pedido
+            </span>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- ALERTA PRINCIPAL -->
+  <tr>
+    <td style="background:linear-gradient(135deg,#1a1200,#0d0d0d);border-left:1px solid rgba(232,168,32,0.3);border-right:1px solid rgba(232,168,32,0.3);border-top:3px solid #E8A820;padding:32px 40px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td>
+            <p style="margin:0 0 6px;font-size:13px;color:#666;letter-spacing:2px;text-transform:uppercase;">Pedido recibido</p>
+            <h1 style="margin:0 0 4px;font-size:32px;color:#E8A820;font-weight:700;letter-spacing:1px;">#{{order_id}}</h1>
+            <p style="margin:0;font-size:13px;color:#555;">{{order_date}} · {{order_time}}</p>
+          </td>
+          <td align="right">
+            <div style="background:#1a1a1a;border:1px solid rgba(232,168,32,0.25);border-radius:8px;padding:14px 20px;text-align:center;">
+              <p style="margin:0 0 4px;font-size:10px;color:#555;letter-spacing:2px;text-transform:uppercase;">Total</p>
+              <p style="margin:0;font-size:28px;color:#E8A820;font-weight:700;">{{total}}</p>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- DATOS DEL CLIENTE -->
+  <tr>
+    <td style="background:#0f0f0f;border-left:1px solid rgba(232,168,32,0.2);border-right:1px solid rgba(232,168,32,0.2);padding:24px 40px;">
+      <p style="margin:0 0 16px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#555;border-bottom:1px solid #1a1a1a;padding-bottom:10px;">
+        👤 Datos del cliente
+      </p>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="50%" style="padding:6px 0;">
+            <p style="margin:0;font-size:11px;color:#555;text-transform:uppercase;letter-spacing:1px;">Nombre</p>
+            <p style="margin:4px 0 0;font-size:15px;color:#ffffff;font-weight:600;">{{customer_name}}</p>
+          </td>
+          <td width="50%" style="padding:6px 0;">
+            <p style="margin:0;font-size:11px;color:#555;text-transform:uppercase;letter-spacing:1px;">Teléfono</p>
+            <a href="https://wa.me/{{customer_phone_raw}}" style="display:block;margin:4px 0 0;font-size:15px;color:#25D366;font-weight:600;text-decoration:none;">
+              📱 {{customer_phone}}
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- TIPO DE ENTREGA -->
+  <tr>
+    <td style="background:#0f0f0f;border-left:1px solid rgba(232,168,32,0.2);border-right:1px solid rgba(232,168,32,0.2);padding:0 40px 24px;">
+      {{#if is_despacho}}
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="background:#1a1a1a;border:1px solid rgba(232,168,32,0.2);border-left:3px solid #E8A820;border-radius:0 6px 6px 0;padding:16px 20px;">
+            <p style="margin:0 0 8px;font-size:11px;color:#E8A820;letter-spacing:2px;text-transform:uppercase;font-weight:700;">🛵 Despacho a domicilio</p>
+            <p style="margin:0;font-size:14px;color:#cccccc;line-height:1.7;">
+              <strong style="color:#fff;">Dirección:</strong> {{address}}<br>
+              <strong style="color:#fff;">Comuna:</strong> {{delivery_commune}}<br>
+              <strong style="color:#fff;">Costo despacho:</strong> <span style="color:#E8A820;">{{delivery_cost}}</span>
+            </p>
+          </td>
+        </tr>
+      </table>
+      {{else}}
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="background:#1a1a1a;border:1px solid rgba(37,211,102,0.2);border-left:3px solid #25D366;border-radius:0 6px 6px 0;padding:16px 20px;">
+            <p style="margin:0 0 4px;font-size:11px;color:#25D366;letter-spacing:2px;text-transform:uppercase;font-weight:700;">🏪 Retiro en tienda</p>
+            <p style="margin:0;font-size:13px;color:#888;">Coordinar horario con el cliente al {{customer_phone}}</p>
+          </td>
+        </tr>
+      </table>
+      {{/if}}
+    </td>
+  </tr>
+
+  <!-- PRODUCTOS PEDIDOS -->
+  <tr>
+    <td style="background:#0f0f0f;border-left:1px solid rgba(232,168,32,0.2);border-right:1px solid rgba(232,168,32,0.2);padding:0 40px 8px;">
+      <p style="margin:0 0 16px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#555;border-bottom:1px solid #1a1a1a;padding-bottom:10px;">
+        🛒 Productos del pedido
+      </p>
+      {{#each items}}
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+        <tr>
+          <td style="background:#161616;border:1px solid #222;border-radius:6px;padding:14px 18px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td>
+                  <p style="margin:0;font-size:15px;color:#ffffff;font-weight:600;">{{this.name}}</p>
+                  <p style="margin:3px 0 0;font-size:12px;color:#555;">{{this.qty}} unidad(es) × {{this.price_fmt}}</p>
+                </td>
+                <td align="right">
+                  <p style="margin:0;font-size:17px;color:#E8A820;font-weight:700;">{{this.subtotal_fmt}}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+      {{/each}}
+    </td>
+  </tr>
+
+  <!-- RESUMEN FINANCIERO -->
+  <tr>
+    <td style="background:#0f0f0f;border-left:1px solid rgba(232,168,32,0.2);border-right:1px solid rgba(232,168,32,0.2);padding:8px 40px 32px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #1a1a1a;padding-top:16px;margin-top:4px;">
+        <tr>
+          <td style="padding:4px 0;"><p style="margin:0;font-size:13px;color:#555;">Subtotal productos</p></td>
+          <td align="right"><p style="margin:0;font-size:13px;color:#888;">{{subtotal}}</p></td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0;"><p style="margin:0;font-size:13px;color:#555;">Costo despacho</p></td>
+          <td align="right"><p style="margin:0;font-size:13px;color:#888;">{{delivery_cost}}</p></td>
+        </tr>
+        <tr>
+          <td style="padding:14px 16px;background:#1a1a1a;border-radius:6px;margin-top:8px;">
+            <p style="margin:0;font-size:14px;color:#fff;font-weight:700;letter-spacing:1px;text-transform:uppercase;">TOTAL COBRADO</p>
+          </td>
+          <td align="right" style="padding:14px 16px;background:#1a1a1a;border-radius:6px;">
+            <p style="margin:0;font-size:22px;color:#E8A820;font-weight:700;">{{total}}</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- ACCIONES RÁPIDAS -->
+  <tr>
+    <td style="background:#0f0f0f;border-left:1px solid rgba(232,168,32,0.2);border-right:1px solid rgba(232,168,32,0.2);padding:0 40px 32px;">
+      <p style="margin:0 0 16px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#555;">
+        Acciones rápidas
+      </p>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="48%" style="padding-right:8px;">
+            <a href="https://dulcesantojos.cl/admin"
+               style="display:block;background:#E8A820;color:#000;text-decoration:none;padding:14px;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;">
+              ⚡ Ver en panel admin
+            </a>
+          </td>
+          <td width="48%" style="padding-left:8px;">
+            <a href="https://wa.me/{{customer_phone_raw}}?text=Hola%20{{customer_name_encoded}}!%20Te%20confirmamos%20tu%20pedido%20%23{{order_id}}%20de%20Dulces%20Antojos%20%F0%9F%8E%82"
+               style="display:block;background:transparent;color:#25D366;text-decoration:none;padding:13px;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;border:1px solid rgba(37,211,102,0.4);">
+              💬 Confirmar por WA
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- MP INFO -->
+  <tr>
+    <td style="background:#0d0d0d;border-left:1px solid rgba(232,168,32,0.2);border-right:1px solid rgba(232,168,32,0.2);padding:0 40px 28px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="background:#111;border:1px solid #1e1e1e;border-radius:6px;padding:14px 18px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td>
+                  <p style="margin:0;font-size:11px;color:#555;text-transform:uppercase;letter-spacing:1px;">ID Mercado Pago</p>
+                  <p style="margin:3px 0 0;font-size:12px;color:#666;font-family:monospace;">{{mp_payment_id}}</p>
+                </td>
+                <td align="right">
+                  <p style="margin:0;font-size:11px;color:#555;text-transform:uppercase;letter-spacing:1px;">Estado pago</p>
+                  <p style="margin:3px 0 0;">
+                    <span style="background:rgba(37,211,102,0.1);color:#25D366;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid rgba(37,211,102,0.3);">
+                      ✓ Aprobado
+                    </span>
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- FOOTER -->
+  <tr>
+    <td style="background:#0a0a0a;border:1px solid rgba(232,168,32,0.15);border-top:1px solid rgba(232,168,32,0.2);border-radius:0 0 12px 12px;padding:20px 40px;text-align:center;">
+      <p style="margin:0;font-size:11px;color:#333;line-height:1.8;">
+        Este correo fue generado automáticamente por el sistema de <strong style="color:#555;">dulcesantojos.cl</strong><br>
+        <a href="https://dulcesantojos.cl/admin" style="color:#E8A820;text-decoration:none;">Panel Admin</a>
+        &nbsp;·&nbsp;
+        <a href="https://dulcesantojos.cl" style="color:#555;text-decoration:none;">Ver tienda</a>
+      </p>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

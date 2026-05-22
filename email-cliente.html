@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confirmación de pedido — Dulces Antojos</title>
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+  <!-- HEADER / LOGO -->
+  <tr>
+    <td style="background:#0d0d0d;border:1px solid rgba(232,168,32,0.2);border-bottom:none;border-radius:12px 12px 0 0;padding:32px 40px;text-align:center;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td align="center" style="padding-bottom:8px;">
+            <!-- Logo texto (reemplazar por <img> si tienes el logo en URL pública) -->
+            <!-- <img src="https://dulcesantojos.cl/logo.png" alt="Dulces Antojos" width="120" style="display:block;margin:0 auto;"> -->
+            <div style="display:inline-block;text-align:center;">
+              <span style="font-family:Georgia,serif;font-size:28px;font-weight:700;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">DULCES</span><br>
+              <span style="font-family:Georgia,serif;font-size:32px;font-style:italic;color:#E8A820;letter-spacing:1px;">Antojos</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td align="center">
+            <span style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#555;font-weight:500;">Pastelería · Desde 2015</span>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- BANNER CONFIRMACIÓN -->
+  <tr>
+    <td style="background:#E8A820;padding:20px 40px;text-align:center;">
+      <p style="margin:0;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#000;font-weight:700;">✦ Pedido confirmado ✦</p>
+    </td>
+  </tr>
+
+  <!-- SALUDO -->
+  <tr>
+    <td style="background:#111111;border-left:1px solid rgba(232,168,32,0.15);border-right:1px solid rgba(232,168,32,0.15);padding:40px 40px 24px;">
+      <h1 style="margin:0 0 12px;font-size:26px;color:#ffffff;font-weight:600;font-family:Georgia,serif;">
+        ¡Gracias por tu pedido, {{customer_name}}! 🎂
+      </h1>
+      <p style="margin:0;font-size:15px;color:#888;line-height:1.7;">
+        Recibimos tu pedido y ya estamos preparándolo con mucho cariño. 
+        Te avisaremos cuando esté listo.
+      </p>
+    </td>
+  </tr>
+
+  <!-- NÚMERO DE PEDIDO -->
+  <tr>
+    <td style="background:#111111;border-left:1px solid rgba(232,168,32,0.15);border-right:1px solid rgba(232,168,32,0.15);padding:0 40px 32px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="background:#1a1a1a;border:1px solid rgba(232,168,32,0.2);border-radius:8px;padding:16px 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td>
+                  <p style="margin:0;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#555;">Número de pedido</p>
+                  <p style="margin:4px 0 0;font-size:20px;color:#E8A820;font-weight:700;letter-spacing:1px;">#{{order_id}}</p>
+                </td>
+                <td align="right">
+                  <p style="margin:0;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#555;">Fecha</p>
+                  <p style="margin:4px 0 0;font-size:14px;color:#aaa;">{{order_date}}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- DETALLE DE PRODUCTOS -->
+  <tr>
+    <td style="background:#111111;border-left:1px solid rgba(232,168,32,0.15);border-right:1px solid rgba(232,168,32,0.15);padding:0 40px 8px;">
+      <p style="margin:0 0 16px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#555;border-bottom:1px solid #222;padding-bottom:12px;">
+        Detalle del pedido
+      </p>
+
+      <!-- ITEM — repetir este bloque por cada producto -->
+      {{#each items}}
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
+        <tr>
+          <td style="padding:12px 16px;background:#1a1a1a;border-radius:6px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td>
+                  <p style="margin:0;font-size:14px;color:#ffffff;font-weight:600;">{{this.name}}</p>
+                  <p style="margin:2px 0 0;font-size:12px;color:#555;">Cantidad: {{this.qty}} × {{this.price_fmt}}</p>
+                </td>
+                <td align="right">
+                  <p style="margin:0;font-size:16px;color:#E8A820;font-weight:700;">{{this.subtotal_fmt}}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+      {{/each}}
+      <!-- FIN ITEMS -->
+    </td>
+  </tr>
+
+  <!-- TOTALES -->
+  <tr>
+    <td style="background:#111111;border-left:1px solid rgba(232,168,32,0.15);border-right:1px solid rgba(232,168,32,0.15);padding:8px 40px 32px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #222;padding-top:16px;margin-top:4px;">
+        <tr>
+          <td style="padding:4px 0;"><p style="margin:0;font-size:13px;color:#666;">Subtotal</p></td>
+          <td align="right"><p style="margin:0;font-size:13px;color:#888;">{{subtotal}}</p></td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0;"><p style="margin:0;font-size:13px;color:#666;">Despacho ({{delivery_commune}})</p></td>
+          <td align="right"><p style="margin:0;font-size:13px;color:#888;">{{delivery_cost}}</p></td>
+        </tr>
+        <tr>
+          <td style="padding:12px 0 4px;border-top:1px solid #2a2a2a;">
+            <p style="margin:0;font-size:16px;color:#ffffff;font-weight:700;">TOTAL</p>
+          </td>
+          <td align="right" style="border-top:1px solid #2a2a2a;">
+            <p style="margin:0;font-size:20px;color:#E8A820;font-weight:700;">{{total}}</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- ENTREGA -->
+  <tr>
+    <td style="background:#111111;border-left:1px solid rgba(232,168,32,0.15);border-right:1px solid rgba(232,168,32,0.15);padding:0 40px 32px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="background:#1a1a1a;border:1px solid rgba(232,168,32,0.15);border-radius:8px;padding:20px;">
+            <p style="margin:0 0 12px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#555;">
+              {{#if is_despacho}}🛵 Información de despacho{{else}}🏪 Retiro en tienda{{/if}}
+            </p>
+            {{#if is_despacho}}
+            <p style="margin:0;font-size:14px;color:#cccccc;line-height:1.6;">
+              <strong style="color:#ffffff;">Dirección:</strong> {{address}}<br>
+              <strong style="color:#ffffff;">Comuna:</strong> {{delivery_commune}}<br>
+              <strong style="color:#ffffff;">Contacto:</strong> {{customer_phone}}
+            </p>
+            {{else}}
+            <p style="margin:0;font-size:14px;color:#cccccc;line-height:1.6;">
+              Te contactaremos al <strong style="color:#ffffff;">{{customer_phone}}</strong> para coordinar el horario de retiro.<br>
+              También puedes escribirnos al WhatsApp.
+            </p>
+            {{/if}}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- ESTADOS DEL PEDIDO -->
+  <tr>
+    <td style="background:#111111;border-left:1px solid rgba(232,168,32,0.15);border-right:1px solid rgba(232,168,32,0.15);padding:0 40px 40px;">
+      <p style="margin:0 0 20px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#555;">
+        Estado de tu pedido
+      </p>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <!-- Paso 1 - activo -->
+          <td align="center" width="25%">
+            <div style="width:36px;height:36px;background:#E8A820;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:36px;text-align:center;">✓</div>
+            <p style="margin:0;font-size:10px;color:#E8A820;letter-spacing:1px;text-transform:uppercase;font-weight:600;">Recibido</p>
+          </td>
+          <td align="center" width="25%">
+            <div style="width:36px;height:36px;background:#222;border:1px solid #333;border-radius:50%;margin:0 auto 8px;line-height:36px;text-align:center;font-size:14px;color:#555;">2</div>
+            <p style="margin:0;font-size:10px;color:#444;letter-spacing:1px;text-transform:uppercase;">Preparando</p>
+          </td>
+          <td align="center" width="25%">
+            <div style="width:36px;height:36px;background:#222;border:1px solid #333;border-radius:50%;margin:0 auto 8px;line-height:36px;text-align:center;font-size:14px;color:#555;">3</div>
+            <p style="margin:0;font-size:10px;color:#444;letter-spacing:1px;text-transform:uppercase;">En camino</p>
+          </td>
+          <td align="center" width="25%">
+            <div style="width:36px;height:36px;background:#222;border:1px solid #333;border-radius:50%;margin:0 auto 8px;line-height:36px;text-align:center;font-size:14px;color:#555;">4</div>
+            <p style="margin:0;font-size:10px;color:#444;letter-spacing:1px;text-transform:uppercase;">Entregado</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- CTA WHATSAPP -->
+  <tr>
+    <td style="background:#111111;border-left:1px solid rgba(232,168,32,0.15);border-right:1px solid rgba(232,168,32,0.15);padding:0 40px 40px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td align="center" style="background:#1a1a1a;border:1px solid rgba(37,211,102,0.2);border-radius:8px;padding:20px;">
+            <p style="margin:0 0 12px;font-size:13px;color:#888;line-height:1.6;">
+              ¿Tienes alguna duda sobre tu pedido?<br>Escríbenos directamente.
+            </p>
+            <a href="https://wa.me/56948493088?text=Hola!%20Tengo%20una%20consulta%20sobre%20mi%20pedido%20%23{{order_id}}"
+               style="display:inline-block;background:#25D366;color:#000;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+              💬 Escribir al WhatsApp
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- FOOTER -->
+  <tr>
+    <td style="background:#0d0d0d;border:1px solid rgba(232,168,32,0.15);border-top:1px solid rgba(232,168,32,0.25);border-radius:0 0 12px 12px;padding:28px 40px;text-align:center;">
+      <p style="margin:0 0 8px;font-family:Georgia,serif;font-size:18px;color:#E8A820;font-style:italic;">Dulces Antojos</p>
+      <p style="margin:0 0 12px;font-size:11px;color:#444;letter-spacing:1px;">Pastelería & Shop · Santiago, Chile · Desde 2015</p>
+      <p style="margin:0;font-size:11px;color:#333;line-height:1.8;">
+        <a href="https://dulcesantojos.cl" style="color:#555;text-decoration:none;">dulcesantojos.cl</a>
+        &nbsp;·&nbsp;
+        <a href="https://instagram.com/dulcesantojos_cl" style="color:#555;text-decoration:none;">@dulcesantojos_cl</a>
+        &nbsp;·&nbsp;
+        <a href="https://instagram.com/dulcesantojosshop" style="color:#555;text-decoration:none;">@dulcesantojosshop</a>
+      </p>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

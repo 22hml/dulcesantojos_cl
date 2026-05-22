@@ -133,6 +133,8 @@ export async function serviceGetOrder(orderId: number) {
 
   return row as {
     id: number;
+    status: string;
+    mp_payment_id: string | null;
     delivery_type: "despacho" | "retiro" | "region";
     address: string | null;
     comuna: string | null;
@@ -144,6 +146,7 @@ export async function serviceGetOrder(orderId: number) {
     delivery_cost: number;
     total: number;
     items: { id: number; name: string; qty: number; price: number }[];
+    created_at: string;
   };
 }
 

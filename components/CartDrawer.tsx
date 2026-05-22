@@ -124,7 +124,9 @@ export default function CartDrawer() {
     focusCartField(field);
   }
 
-  function validateCustomerFields(): boolean {
+  function validateCustomerFields({
+    requireEmail = false,
+  }: { requireEmail?: boolean } = {}): boolean {
     setFieldError(null);
     if (!customerName.trim()) {
       showFieldError("name", "Ingresa tu nombre para el pedido");
@@ -152,14 +154,21 @@ export default function CartDrawer() {
         );
         return false;
       }
-      if (!customerEmail.trim()) {
+    }
+
+    const email = customerEmail.trim();
+    if (requireEmail || deliveryType === "region") {
+      if (!email) {
         showFieldError("email", "Ingresa tu correo electrónico");
         return false;
       }
-      if (!isValidEmail(customerEmail)) {
+      if (!isValidEmail(email)) {
         showFieldError("email", "Ingresa un correo electrónico válido");
         return false;
       }
+    } else if (email && !isValidEmail(email)) {
+      showFieldError("email", "Ingresa un correo electrónico válido");
+      return false;
     }
     return true;
   }
@@ -248,7 +257,7 @@ export default function CartDrawer() {
   }
 
   async function handleCheckout() {
-    if (!validateCustomerFields()) return;
+    if (!validateCustomerFields({ requireEmail: true })) return;
 
     setLoading(true);
     setError(null);
@@ -277,8 +286,7 @@ export default function CartDrawer() {
           comuna,
           customerName: customerName.trim(),
           customerPhone: customerPhone.trim(),
-          customerEmail:
-            deliveryType === "region" ? customerEmail.trim() : undefined,
+          customerEmail: customerEmail.trim(),
           observaciones: observaciones.trim() || undefined,
           deliveryCost,
           clientOrigin:
@@ -312,8 +320,7 @@ export default function CartDrawer() {
               comuna: deliveryType === "despacho" ? comuna : null,
               customer_name: customerName.trim(),
               customer_phone: customerPhone.trim(),
-              customer_email:
-                deliveryType === "region" ? customerEmail.trim() : null,
+              customer_email: customerEmail.trim() || null,
               observaciones: observaciones.trim() || null,
               subtotal: syncedSubtotal,
               delivery_cost: deliveryCost,
@@ -372,8 +379,7 @@ export default function CartDrawer() {
         comuna: deliveryType === "despacho" ? comuna : null,
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
-        customer_email:
-          deliveryType === "region" ? customerEmail.trim() : null,
+        customer_email: customerEmail.trim() || null,
         observaciones: observaciones.trim() || null,
         subtotal: freshSubtotal,
         delivery_cost: deliveryCost,
@@ -601,23 +607,9 @@ export default function CartDrawer() {
                       className={`${fieldInputClass("address")} min-h-[72px] resize-y`}
                       rows={2}
                     />
-                    <label className="block text-[0.72rem] uppercase tracking-wider text-theme-muted">
-                      Correo electrónico <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="cart-field-email"
-                      type="email"
-                      autoComplete="email"
-                      placeholder="tu@correo.com"
-                      value={customerEmail}
-                      onChange={(e) => {
-                        setCustomerEmail(e.target.value);
-                        if (fieldError === "email") setFieldError(null);
-                      }}
-                      className={fieldInputClass("email")}
-                    />
                     <p className="text-[0.72rem] text-theme-muted">
-                      Teléfono y nombre se completan abajo en datos de contacto.
+                      Nombre, teléfono y correo se completan abajo en datos de
+                      contacto.
                     </p>
                   </div>
                 ) : (
@@ -661,6 +653,28 @@ export default function CartDrawer() {
                   className={fieldInputClass("phone")}
                   required
                 />
+                <label className="mb-1 mt-3 block text-[0.72rem] text-theme-muted">
+                  Correo electrónico{" "}
+                  <span className="text-theme-muted/60">
+                    (requerido para pagar)
+                  </span>
+                </label>
+                <input
+                  id="cart-field-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="tu@correo.com"
+                  value={customerEmail}
+                  onChange={(e) => {
+                    setCustomerEmail(e.target.value);
+                    if (fieldError === "email") setFieldError(null);
+                  }}
+                  className={fieldInputClass("email")}
+                />
+                <p className="mt-1 text-[0.72rem] text-theme-muted">
+                  Te enviaremos el detalle de la compra cuando Mercado Pago
+                  confirme el pago.
+                </p>
                 <label className="mb-1 mt-3 block text-[0.72rem] text-theme-muted">
                   Observaciones{" "}
                   <span className="text-theme-muted/60">(opcional)</span>
