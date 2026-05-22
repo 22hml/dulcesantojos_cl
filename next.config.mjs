@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    outputFileTracingIncludes: {
+      "/api/webhook": ["./email-admin.html", "./email-cliente.html"],
+    },
+  },
   images: {
     remotePatterns: [
       {

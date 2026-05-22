@@ -44,9 +44,6 @@ export default function SiteFooter() {
           @dulcesantojosshop
         </a>
         <br />
-        <a href="/admin" className="text-gold/70 hover:text-gold hover:underline">
-          Admin
-        </a>
       </p>
     </footer>
   );
