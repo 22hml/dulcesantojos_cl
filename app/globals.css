@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Dancing+Script:wght@700&family=Outfit:wght@300;400;500;600;700&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -56,7 +54,7 @@ html {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: "Outfit", system-ui, sans-serif;
+  font-family: var(--font-outfit), system-ui, sans-serif;
 }
 
 ::-webkit-scrollbar {
@@ -72,13 +70,13 @@ body {
 
 @layer utilities {
   .font-bebas {
-    font-family: "Bebas Neue", sans-serif;
+    font-family: var(--font-bebas), sans-serif;
   }
   .font-script {
-    font-family: "Dancing Script", cursive;
+    font-family: var(--font-script), cursive;
   }
   .font-outfit {
-    font-family: "Outfit", sans-serif;
+    font-family: var(--font-outfit), sans-serif;
   }
   .bg-theme-base {
     background-color: var(--bg-base);

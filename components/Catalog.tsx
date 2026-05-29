@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { DEMO_PRODUCTS } from "@/lib/demo-products";
 import { useShopMode } from "@/context/ShopModeContext";
 import type { Product } from "@/types";
 import type { ShopMode } from "@/context/ShopModeContext";
@@ -10,47 +8,22 @@ import ProductCard from "./ProductCard";
 
 const waNumber = process.env.NEXT_PUBLIC_WA_NUMBER;
 
-export default function Catalog() {
+type Props = {
+  initialProducts: Product[];
+  demoMode?: boolean;
+};
+
+export default function Catalog({ initialProducts, demoMode = false }: Props) {
   const { mode } = useShopMode();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("Todos");
-  const [demoMode, setDemoMode] = useState(false);
-
-  useEffect(() => {
-    async function load() {
-      if (!supabase) {
-        setProducts(DEMO_PRODUCTS);
-        setDemoMode(true);
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("active", true)
-        .order("category")
-        .order("name");
-
-      if (error || !data?.length) {
-        setProducts(DEMO_PRODUCTS);
-        setDemoMode(true);
-      } else {
-        setProducts(data as Product[]);
-      }
-      setLoading(false);
-    }
-    load();
-  }, []);
 
   useEffect(() => {
     setFilter("Todos");
   }, [mode]);
 
   const modeProducts = useMemo(
-    () => products.filter((p) => p.mode === mode),
-    [products, mode]
+    () => initialProducts.filter((p) => p.mode === mode),
+    [initialProducts, mode]
   );
 
   const categories = useMemo(() => {
@@ -130,9 +103,7 @@ export default function Catalog() {
         </p>
       )}
 
-      {loading ? (
-        <p className="py-20 text-center text-gray">Cargando productos…</p>
-      ) : filtered.length === 0 ? (
+      {filtered.length === 0 ? (
         <p className="py-20 text-center text-gray">
           No hay productos en esta sección aún.
         </p>

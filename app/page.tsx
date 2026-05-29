@@ -6,24 +6,27 @@ import Catalog from "@/components/Catalog";
 import HowItWorks from "@/components/HowItWorks";
 import FeaturesBar from "@/components/FeaturesBar";
 import SiteFooter from "@/components/SiteFooter";
-import CartDrawer from "@/components/CartDrawer";
-import AddToCartModal from "@/components/AddToCartModal";
+import CartLayer from "@/components/CartLayer";
+import { getHomeData } from "@/lib/home-data";
 
-export default function Home() {
+export const revalidate = 120;
+
+export default async function Home() {
+  const { products, heroItems, demoMode } = await getHomeData();
+
   return (
     <>
       <Navbar />
       <main>
-        <HeroFull />
+        <HeroFull initialItems={heroItems} />
         <TrustBar />
         <MarqueeBar />
-        <Catalog />
+        <Catalog initialProducts={products} demoMode={demoMode} />
         <HowItWorks />
         <FeaturesBar />
       </main>
       <SiteFooter />
-      <CartDrawer />
-      <AddToCartModal />
+      <CartLayer />
     </>
   );
 }

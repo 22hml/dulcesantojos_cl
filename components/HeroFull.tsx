@@ -3,12 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useShopMode } from "@/context/ShopModeContext";
-import { supabase } from "@/lib/supabase";
-import { DEMO_PRODUCTS } from "@/lib/demo-products";
 import { isSupabaseStorageUrl } from "@/lib/image-optimization";
-import { resolveHeroGrid } from "@/lib/hero-slots";
-import type { HeroGridItem, HeroSlot } from "@/types/hero";
-import type { Product } from "@/types";
+import type { HeroGridItem } from "@/types/hero";
 
 const waNumber = process.env.NEXT_PUBLIC_WA_NUMBER;
 
@@ -19,44 +15,18 @@ const STATS = [
   "Mercado Pago",
 ];
 
-const PLACEHOLDER_ITEMS: HeroGridItem[] = [1, 2, 3, 4].map((n) => ({
-  key: `placeholder-${n}`,
-  imageUrl: null,
-  alt: "",
-  isEmpty: true,
-}));
+type Props = {
+  initialItems: HeroGridItem[];
+};
 
-export default function HeroFull() {
+export default function HeroFull({ initialItems }: Props) {
   const { scrollToCatalog } = useShopMode();
   const [heroBg, setHeroBg] = useState(false);
-  const [gridItems, setGridItems] = useState<HeroGridItem[]>(PLACEHOLDER_ITEMS);
 
   useEffect(() => {
     const img = new window.Image();
     img.src = "/hero-bg.jpg";
     img.onload = () => setHeroBg(true);
-  }, []);
-
-  useEffect(() => {
-    async function load() {
-      if (!supabase) {
-        setGridItems(resolveHeroGrid(null, DEMO_PRODUCTS));
-        return;
-      }
-
-      const [slotsRes, productsRes] = await Promise.all([
-        supabase.from("hero_slots").select("*").order("slot"),
-        supabase.from("products").select("*").eq("active", true).order("id"),
-      ]);
-
-      const products = (productsRes.data as Product[])?.length
-        ? (productsRes.data as Product[])
-        : DEMO_PRODUCTS;
-      const slots = (slotsRes.data as HeroSlot[]) ?? null;
-
-      setGridItems(resolveHeroGrid(slots, products));
-    }
-    load();
   }, []);
 
   const backgroundStyle = useMemo(() => {
@@ -76,7 +46,7 @@ export default function HeroFull() {
   }, [heroBg]);
 
   const slots = useMemo(() => {
-    const items = [...gridItems];
+    const items = [...initialItems];
     while (items.length < 4) {
       items.push({
         key: `pad-${items.length}`,
@@ -86,7 +56,7 @@ export default function HeroFull() {
       });
     }
     return items.slice(0, 4);
-  }, [gridItems]);
+  }, [initialItems]);
 
   return (
     <section
