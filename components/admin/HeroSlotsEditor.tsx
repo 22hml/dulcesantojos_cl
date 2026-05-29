@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { isSupabaseStorageUrl } from "@/lib/image-optimization";
 import type { HeroSlot, HeroSlotKind } from "@/types/hero";
 import type { Product } from "@/types";
 
@@ -132,6 +133,7 @@ export default function HeroSlotsEditor({
                     alt={label || `Casilla ${slot}`}
                     fill
                     className="object-cover"
+                    unoptimized={isSupabaseStorageUrl(previewUrl)}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-3xl text-theme-muted">

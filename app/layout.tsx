@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CartProvider } from "@/context/CartContext";
 import { ShopModeProvider } from "@/context/ShopModeContext";
 import { ThemeProvider } from "@/context/ThemeContext";
@@ -16,11 +18,8 @@ export const metadata: Metadata = {
     "reposteria chile",
   ],
   icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/logo.png", type: "image/png", sizes: "512x512" },
-    ],
-    apple: "/logo.png",
+    icon: [{ url: "/logo.png", type: "image/png", sizes: "512x512" }],
+    apple: "/apple-touch-icon.png",
   },
   openGraph: {
     title: "Dulces Antojos",
@@ -59,6 +58,8 @@ export default function RootLayout({
             <CartProvider>{children}</CartProvider>
           </ShopModeProvider>
         </ThemeProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

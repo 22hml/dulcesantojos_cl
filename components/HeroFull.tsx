@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useShopMode } from "@/context/ShopModeContext";
 import { supabase } from "@/lib/supabase";
 import { DEMO_PRODUCTS } from "@/lib/demo-products";
+import { isSupabaseStorageUrl } from "@/lib/image-optimization";
 import { resolveHeroGrid } from "@/lib/hero-slots";
 import type { HeroGridItem, HeroSlot } from "@/types/hero";
 import type { Product } from "@/types";
@@ -12,7 +13,7 @@ import type { Product } from "@/types";
 const waNumber = process.env.NEXT_PUBLIC_WA_NUMBER;
 
 const STATS = [
-  "+500 pedidos",
+  "+8000 pedidos",
   "Desde 2015",
   "Despacho Santiago y regiones",
   "Mercado Pago",
@@ -177,6 +178,7 @@ function HeroCell({ item }: { item: HeroGridItem }) {
             fill
             className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
             sizes="(max-width: 1024px) 45vw, 200px"
+            unoptimized={isSupabaseStorageUrl(item.imageUrl)}
           />
           {item.caption && (
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 pb-2 pt-6">

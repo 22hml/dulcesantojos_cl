@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { DeliveryZone, Order, OrderStatus, Product } from "@/types";
 import { formatCLP } from "@/lib/format";
+import { isSupabaseStorageUrl } from "@/lib/image-optimization";
 import ZoneCostEditor from "@/components/ZoneCostEditor";
 import {
   STATUS_BADGE,
@@ -577,6 +578,7 @@ export default function AdminPage() {
                           alt="Vista previa"
                           fill
                           className="object-cover"
+                          unoptimized={isSupabaseStorageUrl(editing.image_url)}
                         />
                       </div>
                     )}
@@ -619,6 +621,7 @@ export default function AdminPage() {
                           alt={p.name}
                           fill
                           className="object-cover"
+                          unoptimized={isSupabaseStorageUrl(p.image_url)}
                         />
                       </div>
                     ) : (

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { Product } from "@/types";
+import { isSupabaseStorageUrl } from "@/lib/image-optimization";
 import { getProductEmoji } from "@/lib/product-emoji";
 
 type Props = {
@@ -27,6 +28,7 @@ export default function CartItemThumb({
           fill
           className="object-cover"
           sizes={`${size}px`}
+          unoptimized={isSupabaseStorageUrl(item.image_url)}
         />
       </div>
     );

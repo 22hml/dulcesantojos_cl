@@ -15,7 +15,13 @@ const waNumber = process.env.NEXT_PUBLIC_WA_NUMBER;
 const inputClass =
   "w-full rounded border border-theme bg-theme-input px-4 py-2.5 font-outfit text-sm text-theme placeholder:text-theme-muted focus:border-gold focus:outline-none";
 
-type CustomerField = "name" | "phone" | "email" | "comuna" | "address";
+type CustomerField =
+  | "name"
+  | "phone"
+  | "email"
+  | "comuna"
+  | "address"
+  | "pickupPolicy";
 
 const FIELD_IDS: Record<CustomerField, string> = {
   name: "cart-field-name",
@@ -23,6 +29,7 @@ const FIELD_IDS: Record<CustomerField, string> = {
   email: "cart-field-email",
   comuna: "cart-field-comuna",
   address: "cart-field-address",
+  pickupPolicy: "cart-field-pickup-policy",
 };
 
 function focusCartField(field: CustomerField) {
@@ -78,6 +85,7 @@ export default function CartDrawer() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [observaciones, setObservaciones] = useState("");
+  const [pickupPolicyAccepted, setPickupPolicyAccepted] = useState(false);
   const [zones, setZones] = useState<DeliveryZone[]>(FALLBACK_DELIVERY_ZONES);
   const [loading, setLoading] = useState(false);
   const [waLoading, setWaLoading] = useState(false);
@@ -111,6 +119,7 @@ export default function CartDrawer() {
       : deliveryType === "region" && regionAddress.trim()
         ? regionAddress.trim()
         : "";
+  const needsPickupPolicy = deliveryType === "retiro" && !pickupPolicyAccepted;
 
   function fieldInputClass(field: CustomerField) {
     return fieldError === field
@@ -154,6 +163,13 @@ export default function CartDrawer() {
         );
         return false;
       }
+    }
+    if (deliveryType === "retiro" && !pickupPolicyAccepted) {
+      showFieldError(
+        "pickupPolicy",
+        "Debes aceptar la política de retiro antes de continuar"
+      );
+      return false;
     }
 
     const email = customerEmail.trim();
@@ -613,9 +629,40 @@ export default function CartDrawer() {
                     </p>
                   </div>
                 ) : (
-                  <p className="text-[0.78rem] text-theme-muted">
-                    Coordina el horario por WhatsApp.
-                  </p>
+                  <div
+                    id={FIELD_IDS.pickupPolicy}
+                    className={`space-y-3 rounded border px-3 py-3 ${
+                      fieldError === "pickupPolicy"
+                        ? "border-red-500 bg-red-500/10"
+                        : "border-gold/25 bg-gold/5"
+                    }`}
+                  >
+                    <p className="text-[0.75rem] leading-relaxed text-theme-muted">
+                      <strong className="text-theme">Importante:</strong> los
+                      pedidos con retiro deben ser retirados dentro de un plazo
+                      máximo de <strong className="text-theme">5 días hábiles</strong>{" "}
+                      desde la confirmación de disponibilidad. Pasado ese plazo,
+                      el pedido se considerará{" "}
+                      <strong className="text-theme">no retirado</strong> y no se
+                      garantiza su conservación ni devolución, especialmente en
+                      productos preparados, personalizados o reservados.
+                    </p>
+                    <label className="flex cursor-pointer items-start gap-2 text-[0.75rem] leading-relaxed text-theme">
+                      <input
+                        type="checkbox"
+                        checked={pickupPolicyAccepted}
+                        onChange={(e) => {
+                          setPickupPolicyAccepted(e.target.checked);
+                          if (fieldError === "pickupPolicy") setFieldError(null);
+                        }}
+                        className="mt-0.5 h-4 w-4 shrink-0 accent-gold"
+                      />
+                      <span>
+                        Acepto que tengo hasta 5 días hábiles para retirar mi
+                        pedido una vez confirmado.
+                      </span>
+                    </label>
+                  </div>
                 )}
               </div>
 
@@ -731,7 +778,8 @@ export default function CartDrawer() {
               type="button"
               disabled={
                 loading ||
-                (deliveryType === "despacho" && (!comuna || !selectedZone))
+                (deliveryType === "despacho" && (!comuna || !selectedZone)) ||
+                needsPickupPolicy
               }
               onClick={handleCheckout}
               className="mt-4 flex w-full flex-col items-center justify-center gap-1 rounded bg-gold px-4 py-[1.2rem] font-outfit text-black transition hover:bg-gold-light disabled:opacity-60"
@@ -748,7 +796,7 @@ export default function CartDrawer() {
             {waNumber && (
               <button
                 type="button"
-                disabled={loading || waLoading}
+                disabled={loading || waLoading || needsPickupPolicy}
                 onClick={() => void handleWhatsApp()}
                 className="mt-3 flex w-full items-center justify-center gap-2 rounded border border-wa/30 py-3 font-outfit text-[0.75rem] font-semibold uppercase tracking-wider text-wa transition hover:border-wa hover:bg-wa/10 disabled:opacity-60 sm:text-[0.8rem]"
               >

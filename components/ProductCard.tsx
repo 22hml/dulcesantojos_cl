@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import type { Product } from "@/types";
 import { formatCLP } from "@/lib/format";
+import { isSupabaseStorageUrl } from "@/lib/image-optimization";
 import { getProductEmoji, getStockStatus } from "@/lib/product-emoji";
 import { useCart } from "@/context/CartContext";
 import ProductImageModal from "./ProductImageModal";
@@ -67,6 +68,7 @@ export default function ProductCard({ product }: Props) {
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
               sizes="(max-width: 640px) 100vw, 33vw"
+              unoptimized={isSupabaseStorageUrl(product.image_url)}
             />
           ) : (
             <div className="flex h-full items-center justify-center">

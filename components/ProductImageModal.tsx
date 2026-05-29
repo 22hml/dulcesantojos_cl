@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { Product } from "@/types";
 import { formatCLP } from "@/lib/format";
+import { isSupabaseStorageUrl } from "@/lib/image-optimization";
 import { getProductEmoji } from "@/lib/product-emoji";
 
 type Props = {
@@ -59,6 +60,7 @@ export default function ProductImageModal({ product, onClose }: Props) {
               className="max-h-[min(75vh,640px)] w-auto max-w-full rounded-lg object-contain shadow-2xl"
               sizes="(max-width: 768px) 100vw, 672px"
               priority
+              unoptimized={isSupabaseStorageUrl(product.image_url)}
             />
           ) : (
             <div
