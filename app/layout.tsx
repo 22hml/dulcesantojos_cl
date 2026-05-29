@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { CartProvider } from "@/context/CartContext";
 import { ShopModeProvider } from "@/context/ShopModeContext";
 import { ThemeProvider } from "@/context/ThemeContext";
@@ -59,6 +60,7 @@ export default function RootLayout({
             <CartProvider>{children}</CartProvider>
           </ShopModeProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
