@@ -17,6 +17,7 @@ export type ProductStockSnapshot = {
   stock: number;
   active: boolean;
   price: number;
+  discount_pct?: number | null;
 };
 
 export function buildStockValidation(

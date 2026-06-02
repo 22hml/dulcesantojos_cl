@@ -58,7 +58,7 @@ export async function serviceGetProductsByIds(ids: number[]) {
   const { url, key } = getServiceConfig();
   const list = Array.from(new Set(ids)).join(",");
   const res = await fetch(
-    `${url}/rest/v1/products?id=in.(${list})&select=id,name,stock,active,price`,
+    `${url}/rest/v1/products?id=in.(${list})&select=id,name,stock,active,price,discount_pct`,
     {
       headers: {
         apikey: key,
@@ -80,6 +80,7 @@ export async function serviceGetProductsByIds(ids: number[]) {
     stock: number;
     active: boolean;
     price: number;
+    discount_pct: number | null;
   }[];
 }
 

@@ -19,7 +19,7 @@ import {
   serviceUpdateOrder,
 } from "@/lib/supabase-service";
 import { isValidEmail } from "@/types/delivery";
-import type { CartItem } from "@/types";
+import { getDiscountedPrice, type CartItem } from "@/types";
 import type { DeliveryType } from "@/types/delivery";
 
 export async function POST(req: Request) {
@@ -94,10 +94,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const priceById = Object.fromEntries(dbProducts.map((p) => [p.id, p.price]));
+    const dbProductById = new Map(dbProducts.map((p) => [p.id, p]));
     for (const item of items) {
-      const livePrice = priceById[item.id];
-      if (typeof livePrice === "number") item.price = livePrice;
+      const liveProduct = dbProductById.get(item.id);
+      if (!liveProduct) continue;
+      item.name = liveProduct.name;
+      item.price = liveProduct.price;
+      item.discount_pct = liveProduct.discount_pct;
     }
 
     let deliveryCost = 0;
@@ -139,7 +142,10 @@ export async function POST(req: Request) {
       deliveryCost = 0;
     }
 
-    const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+    const subtotal = items.reduce(
+      (s, i) => s + getDiscountedPrice(i) * i.qty,
+      0
+    );
     const total = subtotal + deliveryCost;
     const useSandbox = shouldUseMpSandbox();
     const backBase = resolveMpBackBase(req, clientOrigin, useSandbox);
@@ -148,7 +154,7 @@ export async function POST(req: Request) {
       id: i.id,
       name: i.name,
       qty: i.qty,
-      price: i.price,
+      price: getDiscountedPrice(i),
     }));
 
     step = "crear-pedido";
@@ -199,7 +205,7 @@ export async function POST(req: Request) {
         id: String(i.id),
         title: i.name,
         quantity: i.qty,
-        unit_price: Number(i.price),
+        unit_price: Number(getDiscountedPrice(i)),
         currency_id: "CLP",
       })),
       ...(deliveryCost > 0

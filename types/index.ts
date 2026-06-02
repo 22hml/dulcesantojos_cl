@@ -9,10 +9,18 @@ export type Product = {
   mode: string;
   image_url: string | null;
   highlight: string | null;
+  discount_pct?: number | null;
   /** 1–4 = casilla en el hero del inicio; null = no destacado */
   hero_sort?: number | null;
   active: boolean;
 };
+
+export function getDiscountedPrice(
+  product: Pick<Product, "price" | "discount_pct">
+): number {
+  if (!product.discount_pct) return product.price;
+  return Math.round(product.price * (1 - product.discount_pct / 100));
+}
 
 export type CartItem = Product & { qty: number };
 

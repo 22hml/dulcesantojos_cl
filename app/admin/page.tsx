@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import type { DeliveryZone, Order, OrderStatus, Product } from "@/types";
+import {
+  getDiscountedPrice,
+  type DeliveryZone,
+  type Order,
+  type OrderStatus,
+  type Product,
+} from "@/types";
 import { formatCLP } from "@/lib/format";
 import { isSupabaseStorageUrl } from "@/lib/image-optimization";
 import ZoneCostEditor from "@/components/ZoneCostEditor";
@@ -34,9 +40,12 @@ const emptyProduct = (): Partial<Product> => ({
   category: "",
   mode: "pasteleria",
   highlight: "",
+  discount_pct: null,
   image_url: null,
   active: true,
 });
+
+const DISCOUNT_OPTIONS = [5, 10, 15, 20, 25, 30, 50] as const;
 
 type Tab = "products" | "orders" | "zones";
 
@@ -281,6 +290,12 @@ export default function AdminPage() {
 
   const inputCls =
     "w-full rounded border border-theme bg-theme-input px-3 py-2 text-sm text-theme";
+  const editingFinalPrice = editing
+    ? getDiscountedPrice({
+        price: Number(editing.price) || 0,
+        discount_pct: editing.discount_pct ?? null,
+      })
+    : 0;
 
   if (!authed) {
     return (
@@ -525,6 +540,75 @@ export default function AdminPage() {
                       className={inputCls}
                     />
                   </div>
+                  <div className="rounded border border-theme bg-theme-elevated p-3 sm:col-span-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-theme">
+                      <input
+                        type="checkbox"
+                        checked={editing.discount_pct != null}
+                        onChange={(e) =>
+                          setEditing({
+                            ...editing,
+                            discount_pct: e.target.checked ? 10 : null,
+                          })
+                        }
+                      />
+                      Producto con descuento
+                    </label>
+                    {editing.discount_pct != null && (
+                      <div className="mt-3 space-y-3">
+                        <div className="flex flex-wrap gap-2">
+                          {DISCOUNT_OPTIONS.map((pct) => (
+                            <button
+                              key={pct}
+                              type="button"
+                              onClick={() =>
+                                setEditing({ ...editing, discount_pct: pct })
+                              }
+                              className={`rounded px-2.5 py-1 text-xs font-semibold ${
+                                editing.discount_pct === pct
+                                  ? "bg-red-500 text-white"
+                                  : "border border-theme text-theme-muted"
+                              }`}
+                            >
+                              {pct}%
+                            </button>
+                          ))}
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
+                          <div>
+                            <label className="mb-1 block text-xs text-theme-muted">
+                              Porcentaje
+                            </label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={99}
+                              value={editing.discount_pct ?? ""}
+                              onChange={(e) => {
+                                const value = Number(e.target.value);
+                                setEditing({
+                                  ...editing,
+                                  discount_pct: Number.isFinite(value)
+                                    ? Math.min(99, Math.max(1, value))
+                                    : null,
+                                });
+                              }}
+                              className={inputCls}
+                            />
+                          </div>
+                          <div className="rounded border border-red-500/25 bg-red-500/10 px-3 py-2 text-sm text-theme">
+                            <span className="text-theme-muted">Precio final:</span>{" "}
+                            <strong className="text-gold">
+                              {formatCLP(editingFinalPrice)}
+                            </strong>
+                            <span className="ml-2 text-xs text-theme-muted">
+                              antes {formatCLP(Number(editing.price) || 0)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <p className="text-xs text-theme-muted sm:col-span-2">
                     Para la foto del inicio, usa la sección{" "}
                     <strong className="text-gold">Fotos del inicio</strong> (arriba):
@@ -609,62 +693,84 @@ export default function AdminPage() {
                   No hay productos con estos filtros.
                 </p>
               ) : (
-                filteredProducts.map((p) => (
-                  <div
-                    key={p.id}
-                    className="flex flex-wrap gap-4 rounded-lg border border-theme bg-theme-card p-4"
-                  >
-                    {p.image_url ? (
-                      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded">
-                        <Image
-                          src={p.image_url}
-                          alt={p.name}
-                          fill
-                          className="object-cover"
-                          unoptimized={isSupabaseStorageUrl(p.image_url)}
-                        />
+                filteredProducts.map((p) => {
+                  const finalPrice = getDiscountedPrice(p);
+                  const hasDiscount = !!p.discount_pct;
+
+                  return (
+                    <div
+                      key={p.id}
+                      className="flex flex-wrap gap-4 rounded-lg border border-theme bg-theme-card p-4"
+                    >
+                      {p.image_url ? (
+                        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded">
+                          <Image
+                            src={p.image_url}
+                            alt={p.name}
+                            fill
+                            className="object-cover"
+                            unoptimized={isSupabaseStorageUrl(p.image_url)}
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex h-20 w-20 items-center justify-center rounded bg-theme-elevated text-3xl">
+                          🧁
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-theme">
+                          {p.name}
+                          {productHeroSlot[p.id] != null && (
+                            <span className="ml-2 rounded bg-gold/15 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-gold">
+                              Inicio #{productHeroSlot[p.id]}
+                            </span>
+                          )}
+                          {hasDiscount && (
+                            <span className="ml-2 rounded bg-red-500 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-white">
+                              -{p.discount_pct}% OFF
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-theme-muted">
+                          {p.mode === "pasteleria" ? "🎂 Pastelería" : "📦 Shop"} ·{" "}
+                          {p.category || "Sin categoría"} ·{" "}
+                          {hasDiscount ? (
+                            <>
+                              <span className="line-through">
+                                {formatCLP(p.price)}
+                              </span>{" "}
+                              <span className="font-semibold text-gold">
+                                {formatCLP(finalPrice)}
+                              </span>
+                            </>
+                          ) : (
+                            formatCLP(p.price)
+                          )}{" "}
+                          · Stock {p.stock}
+                          {!p.active && (
+                            <span className="ml-2 text-red-400">(oculto)</span>
+                          )}
+                        </p>
                       </div>
-                    ) : (
-                      <div className="flex h-20 w-20 items-center justify-center rounded bg-theme-elevated text-3xl">
-                        🧁
+                      <div className="flex gap-2 self-center">
+                        <button
+                          type="button"
+                          onClick={() => setEditing(p)}
+                          className="rounded border border-theme px-3 py-1 text-sm text-gold"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteProduct(p.id)}
+                          className="rounded border border-red-500/40 px-3 py-1 text-sm text-red-400"
+                        >
+                          Eliminar
+                        </button>
                       </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-theme">
-                        {p.name}
-                        {productHeroSlot[p.id] != null && (
-                          <span className="ml-2 rounded bg-gold/15 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-gold">
-                            Inicio #{productHeroSlot[p.id]}
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-xs text-theme-muted">
-                        {p.mode === "pasteleria" ? "🎂 Pastelería" : "📦 Shop"} ·{" "}
-                        {p.category || "Sin categoría"} · {formatCLP(p.price)} ·
-                        Stock {p.stock}
-                        {!p.active && (
-                          <span className="ml-2 text-red-400">(oculto)</span>
-                        )}
-                      </p>
                     </div>
-                    <div className="flex gap-2 self-center">
-                      <button
-                        type="button"
-                        onClick={() => setEditing(p)}
-                        className="rounded border border-theme px-3 py-1 text-sm text-gold"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => deleteProduct(p.id)}
-                        className="rounded border border-red-500/40 px-3 py-1 text-sm text-red-400"
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </section>

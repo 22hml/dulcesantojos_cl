@@ -7,7 +7,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import type { Cart, CartItem, Product } from "@/types";
+import { getDiscountedPrice, type Cart, type CartItem, type Product } from "@/types";
 
 type AddedModal = {
   product: Product;
@@ -24,7 +24,13 @@ type CartContextValue = {
   applyStockSnapshot: (
     products: Record<
       number,
-      { stock: number; active?: boolean; price?: number; name?: string }
+      {
+        stock: number;
+        active?: boolean;
+        price?: number;
+        name?: string;
+        discount_pct?: number | null;
+      }
     >
   ) => void;
   clearCart: () => void;
@@ -90,7 +96,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     (
       products: Record<
         number,
-        { stock: number; active?: boolean; price?: number; name?: string }
+        {
+          stock: number;
+          active?: boolean;
+          price?: number;
+          name?: string;
+          discount_pct?: number | null;
+        }
       >
     ) => {
       setCart((prev) => {
@@ -113,6 +125,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             qty,
             ...(typeof info.price === "number" ? { price: info.price } : {}),
             ...(info.name ? { name: info.name } : {}),
+            ...("discount_pct" in info ? { discount_pct: info.discount_pct } : {}),
           };
         }
         return next;
@@ -130,7 +143,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   );
 
   const subtotal = useMemo(
-    () => Object.values(cart).reduce((s, i) => s + i.price * i.qty, 0),
+    () =>
+      Object.values(cart).reduce(
+        (s, i) => s + getDiscountedPrice(i) * i.qty,
+        0
+      ),
     [cart]
   );
 

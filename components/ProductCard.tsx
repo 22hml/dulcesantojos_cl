@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import type { Product } from "@/types";
+import { getDiscountedPrice, type Product } from "@/types";
 import { formatCLP } from "@/lib/format";
 import { isSupabaseStorageUrl } from "@/lib/image-optimization";
 import { getProductEmoji, getStockStatus } from "@/lib/product-emoji";
@@ -37,6 +37,8 @@ export default function ProductCard({ product }: Props) {
   const outOfStock = product.stock <= 0;
   const stock = getStockStatus(product.stock);
   const emoji = getProductEmoji(product);
+  const finalPrice = getDiscountedPrice(product);
+  const hasDiscount = !!product.discount_pct;
 
   function changeQty(delta: number, openDrawer = false) {
     const next = qty + delta;
@@ -88,6 +90,15 @@ export default function ProductCard({ product }: Props) {
               {product.highlight}
             </span>
           )}
+          {hasDiscount && (
+            <span
+              className={`pointer-events-none absolute right-3 rounded-sm bg-red-500 px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-wider text-white shadow-lg ${
+                product.highlight ? "top-11" : "top-3"
+              }`}
+            >
+              -{product.discount_pct}% OFF
+            </span>
+          )}
 
           <button
             type="button"
@@ -115,10 +126,15 @@ export default function ProductCard({ product }: Props) {
           <div className="mt-5 flex items-center justify-between gap-4">
             <div>
               <p className="text-[0.62rem] uppercase tracking-wider text-gray">
-                Precio
+                {hasDiscount ? "Oferta disponible" : "Precio"}
               </p>
+              {hasDiscount && (
+                <p className="font-outfit text-[0.72rem] text-gray line-through">
+                  {formatCLP(product.price)}
+                </p>
+              )}
               <p className="font-bebas text-[1.75rem] leading-none text-gold">
-                {formatCLP(product.price)}
+                {formatCLP(finalPrice)}
               </p>
               <p className="text-[0.68rem] text-gray">por {product.unit}</p>
             </div>

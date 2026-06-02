@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { isAdminSession } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase-admin";
 
@@ -17,6 +18,7 @@ export async function GET() {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+  revalidateTag("home-data");
   return NextResponse.json(data);
 }
 
@@ -24,6 +26,13 @@ function normalizeHeroSort(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
   const n = Number(value);
   if (!Number.isInteger(n) || n < 1 || n > 4) return null;
+  return n;
+}
+
+function normalizeDiscountPct(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 1 || n > 99) return null;
   return n;
 }
 
@@ -56,6 +65,7 @@ export async function POST(req: Request) {
       category: body.category || null,
       mode: body.mode || "pasteleria",
       highlight: body.highlight || null,
+      discount_pct: normalizeDiscountPct(body.discount_pct),
       image_url: body.image_url || null,
       hero_sort: heroSort,
       active: body.active !== false,
@@ -66,6 +76,7 @@ export async function POST(req: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+  revalidateTag("home-data");
   return NextResponse.json(data);
 }
 
@@ -82,6 +93,9 @@ export async function PATCH(req: Request) {
     if (fields.hero_sort != null) {
       await clearHeroSortSlot(supabase, fields.hero_sort as number, id);
     }
+  }
+  if ("discount_pct" in fields) {
+    fields.discount_pct = normalizeDiscountPct(fields.discount_pct);
   }
 
   const { data, error } = await supabase
@@ -108,5 +122,6 @@ export async function DELETE(req: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+  revalidateTag("home-data");
   return NextResponse.json({ ok: true });
 }

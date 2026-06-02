@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
-import type { Product } from "@/types";
+import { getDiscountedPrice, type Product } from "@/types";
 import { formatCLP } from "@/lib/format";
 import { isSupabaseStorageUrl } from "@/lib/image-optimization";
 import { getProductEmoji } from "@/lib/product-emoji";
@@ -15,6 +15,9 @@ type Props = {
 
 /** Modal centrado solo para previsualizar la foto del producto */
 export default function ProductImageModal({ product, onClose }: Props) {
+  const finalPrice = getDiscountedPrice(product);
+  const hasDiscount = !!product.discount_pct;
+
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -79,8 +82,18 @@ export default function ProductImageModal({ product, onClose }: Props) {
           <p className="font-bebas text-2xl tracking-wide text-white sm:text-3xl">
             {product.name}
           </p>
+          {hasDiscount && (
+            <p className="mt-1 text-xs font-bold uppercase tracking-wider text-red-300">
+              -{product.discount_pct}% OFF
+            </p>
+          )}
+          {hasDiscount && (
+            <p className="mt-1 font-outfit text-sm text-white/45 line-through">
+              {formatCLP(product.price)}
+            </p>
+          )}
           <p className="mt-1 font-bebas text-xl text-gold sm:text-2xl">
-            {formatCLP(product.price)}
+            {formatCLP(finalPrice)}
           </p>
           <p className="text-sm text-white/50">por {product.unit}</p>
         </div>

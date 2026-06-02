@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { isAdminSession } from "@/lib/admin-auth";
 import { mergeHeroSlots } from "@/lib/hero-slots";
 import { createAdminClient } from "@/lib/supabase-admin";
@@ -86,6 +87,7 @@ export async function PUT(req: Request) {
     }
 
     await supabase.from("products").update({ hero_sort: slot }).eq("id", productId);
+    revalidateTag("home-data");
     return NextResponse.json({ ok: true, slot, kind: "product" });
   }
 
@@ -115,6 +117,7 @@ export async function PUT(req: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+    revalidateTag("home-data");
     return NextResponse.json({ ok: true, slot, kind: "custom" });
   }
 
@@ -133,5 +136,6 @@ export async function PUT(req: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+  revalidateTag("home-data");
   return NextResponse.json({ ok: true, slot, kind: "empty" });
 }

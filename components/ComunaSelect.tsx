@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { formatCLP } from "@/lib/format";
 import type { DeliveryZone } from "@/types";
 
@@ -22,6 +22,8 @@ export default function ComunaSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
+  const generatedId = useId();
+  const listboxId = `${id ?? generatedId}-listbox`;
 
   const sorted = useMemo(
     () =>
@@ -62,7 +64,9 @@ export default function ComunaSelect({
         id={id}
         type="text"
         role="combobox"
+        aria-controls={listboxId}
         aria-expanded={open}
+        aria-haspopup="listbox"
         aria-autocomplete="list"
         placeholder="Buscar o elegir comuna…"
         value={displayValue}
@@ -76,6 +80,7 @@ export default function ComunaSelect({
       />
       {open && (
         <ul
+          id={listboxId}
           className="absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded border border-theme bg-theme-card py-1 shadow-lg"
           role="listbox"
         >

@@ -7,7 +7,7 @@ import { buildOrderWhatsAppUrl } from "@/lib/order-whatsapp";
 import CartItemThumb from "@/components/CartItemThumb";
 import ComunaSelect from "@/components/ComunaSelect";
 import { FALLBACK_DELIVERY_ZONES } from "@/lib/fallback-zones";
-import type { Cart, DeliveryZone } from "@/types";
+import { getDiscountedPrice, type Cart, type DeliveryZone } from "@/types";
 import { isValidEmail, type DeliveryType } from "@/types/delivery";
 
 const waNumber = process.env.NEXT_PUBLIC_WA_NUMBER;
@@ -193,7 +193,13 @@ export default function CartDrawer() {
     if (!products) return;
     const snapshot: Record<
       number,
-      { stock: number; active?: boolean; price?: number; name?: string }
+      {
+        stock: number;
+        active?: boolean;
+        price?: number;
+        name?: string;
+        discount_pct?: number | null;
+      }
     > = {};
     for (const [id, raw] of Object.entries(products)) {
       const p = raw as {
@@ -201,6 +207,7 @@ export default function CartDrawer() {
         active?: boolean;
         price?: number;
         name?: string;
+        discount_pct?: number | null;
       };
       if (typeof p.stock === "number") {
         snapshot[Number(id)] = {
@@ -208,6 +215,7 @@ export default function CartDrawer() {
           active: p.active,
           price: p.price,
           name: p.name,
+          discount_pct: p.discount_pct,
         };
       }
     }
@@ -252,7 +260,13 @@ export default function CartDrawer() {
     const synced: Cart = {};
     for (const item of currentItems) {
       const p = data.products?.[item.id] as
-        | { stock: number; active?: boolean; price?: number; name?: string }
+        | {
+            stock: number;
+            active?: boolean;
+            price?: number;
+            name?: string;
+            discount_pct?: number | null;
+          }
         | undefined;
       if (!p?.active || p.stock <= 0) continue;
       synced[item.id] = {
@@ -261,6 +275,7 @@ export default function CartDrawer() {
         qty: Math.min(item.qty, p.stock),
         ...(typeof p.price === "number" ? { price: p.price } : {}),
         ...(p.name ? { name: p.name } : {}),
+        ...("discount_pct" in p ? { discount_pct: p.discount_pct } : {}),
       };
     }
 
@@ -284,7 +299,7 @@ export default function CartDrawer() {
 
       const syncedItems = Object.values(syncedCart);
       const syncedSubtotal = syncedItems.reduce(
-        (s, i) => s + i.price * i.qty,
+        (s, i) => s + getDiscountedPrice(i) * i.qty,
         0
       );
       const syncedTotal = syncedSubtotal + deliveryCost;
@@ -344,7 +359,7 @@ export default function CartDrawer() {
               items: syncedItems.map((i) => ({
                 name: i.name,
                 qty: i.qty,
-                price: i.price,
+                price: getDiscountedPrice(i),
               })),
             },
             { mercadoPago: true }
@@ -384,7 +399,7 @@ export default function CartDrawer() {
 
       const freshItems = Object.values(syncedCart);
       const freshSubtotal = freshItems.reduce(
-        (s, i) => s + i.price * i.qty,
+        (s, i) => s + getDiscountedPrice(i) * i.qty,
         0
       );
       const freshTotal = freshSubtotal + deliveryCost;
@@ -403,7 +418,7 @@ export default function CartDrawer() {
         items: freshItems.map((i) => ({
           name: i.name,
           qty: i.qty,
-          price: i.price,
+          price: getDiscountedPrice(i),
         })),
       });
 
@@ -471,8 +486,13 @@ export default function CartDrawer() {
                         {item.name}
                       </p>
                       <p className="font-bebas text-lg text-gold">
-                        {formatCLP(item.price * item.qty)}
+                        {formatCLP(getDiscountedPrice(item) * item.qty)}
                       </p>
+                      {!!item.discount_pct && (
+                        <p className="text-[0.68rem] text-theme-muted">
+                          {formatCLP(item.price)} c/u · -{item.discount_pct}% OFF
+                        </p>
+                      )}
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
                       <button
