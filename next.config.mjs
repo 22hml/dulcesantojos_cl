@@ -3,6 +3,7 @@ const nextConfig = {
   experimental: {
     outputFileTracingIncludes: {
       "/api/webhook": ["./email-admin.html", "./email-cliente.html"],
+      "/api/admin/coupons/send": ["./email-cupon.html"],
     },
   },
   images: {
