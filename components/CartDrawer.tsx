@@ -93,6 +93,7 @@ export default function CartDrawer() {
   const [pickupPolicyAccepted, setPickupPolicyAccepted] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [couponPanelOpen, setCouponPanelOpen] = useState(false);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [zones, setZones] = useState<DeliveryZone[]>(FALLBACK_DELIVERY_ZONES);
@@ -246,6 +247,7 @@ export default function CartDrawer() {
         discount_pct: Number(data.discount_pct),
       });
       setCouponCode(data.code || code.toUpperCase());
+      setCouponPanelOpen(false);
     } catch (e) {
       setAppliedCoupon(null);
       setCouponError(e instanceof Error ? e.message : "Cupón inválido");
@@ -838,46 +840,72 @@ export default function CartDrawer() {
         </div>
 
         {items.length > 0 && (
-          <div className="shrink-0 border-t border-theme px-5 py-4 sm:px-8 sm:py-5">
-            <div className="mb-4 rounded border border-theme bg-theme-card p-3">
-              <label className="mb-2 block text-[0.72rem] uppercase tracking-wider text-theme-muted">
-                Cupón de descuento
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Ej: HIJO"
-                  value={couponCode}
-                  onChange={(e) => {
-                    setCouponCode(e.target.value.toUpperCase());
-                    setCouponError(null);
-                    setAppliedCoupon(null);
-                  }}
-                  className={`${inputClass} uppercase`}
-                />
-                <button
-                  type="button"
-                  onClick={() => void applyCoupon()}
-                  disabled={couponLoading}
-                  className="shrink-0 rounded border border-gold/40 px-3 py-2 font-outfit text-[0.7rem] font-semibold uppercase tracking-wider text-gold transition hover:bg-gold hover:text-black disabled:opacity-50"
-                >
-                  {couponLoading ? "..." : "Aplicar"}
-                </button>
-              </div>
-              {appliedCoupon && (
-                <p className="mt-2 text-[0.72rem] text-gold">
-                  Cupón {appliedCoupon.code} aplicado: -{appliedCoupon.discount_pct}%
-                </p>
+          <div className="shrink-0 border-t border-theme px-5 py-3 sm:px-8 sm:py-4">
+            <div className="relative mb-2">
+              <button
+                type="button"
+                onClick={() => setCouponPanelOpen((open) => !open)}
+                className={`flex w-full items-center justify-between rounded border px-3 py-2 font-outfit text-[0.68rem] font-semibold uppercase tracking-wider transition ${
+                  appliedCoupon
+                    ? "border-gold/50 bg-gold/10 text-gold"
+                    : "border-theme bg-theme-card text-theme-muted hover:border-gold hover:text-gold"
+                }`}
+              >
+                <span>
+                  {appliedCoupon
+                    ? `Cupón ${appliedCoupon.code} aplicado`
+                    : "Tengo un cupón"}
+                </span>
+                <span className="text-sm">{couponPanelOpen ? "−" : "+"}</span>
+              </button>
+
+              {couponPanelOpen && (
+                <div className="absolute bottom-full left-0 right-0 z-20 mb-2 rounded-lg border border-gold/30 bg-theme-elevated p-3 shadow-2xl">
+                  <label className="mb-2 block text-[0.66rem] uppercase tracking-wider text-theme-muted">
+                    Código de descuento
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Ej: DulcesAntojos"
+                      value={couponCode}
+                      onChange={(e) => {
+                        setCouponCode(e.target.value.toUpperCase());
+                        setCouponError(null);
+                        setAppliedCoupon(null);
+                      }}
+                      className={`${inputClass} h-10 px-3 py-1.5 uppercase`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void applyCoupon()}
+                      disabled={couponLoading}
+                      className="h-10 shrink-0 rounded bg-gold px-3 font-outfit text-[0.68rem] font-bold uppercase tracking-wider text-black transition hover:bg-gold-light disabled:opacity-50"
+                    >
+                      {couponLoading ? "..." : "Aplicar"}
+                    </button>
+                  </div>
+                  {appliedCoupon && (
+                    <p className="mt-2 text-[0.7rem] text-gold">
+                      -{appliedCoupon.discount_pct}% aplicado al subtotal.
+                    </p>
+                  )}
+                  {couponError && (
+                    <p className="mt-2 text-[0.7rem] text-red-400">
+                      {couponError}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setCouponPanelOpen(false)}
+                    className="mt-2 text-[0.68rem] text-theme-muted hover:text-theme"
+                  >
+                    Cerrar
+                  </button>
+                </div>
               )}
-              {couponError && (
-                <p className="mt-2 text-[0.72rem] text-red-400">{couponError}</p>
-              )}
-              <p className="mt-2 text-[0.68rem] text-theme-muted">
-                El cupón se valida con tu correo y se descuenta al pagar con
-                Mercado Pago.
-              </p>
             </div>
-            <div className="space-y-1 text-[0.86rem] text-theme-muted">
+            <div className="space-y-0.5 text-[0.82rem] text-theme-muted">
               <div className="flex justify-between">
                 <span>Subtotal</span>
                 <span>{formatCLP(subtotal)}</span>
@@ -905,7 +933,7 @@ export default function CartDrawer() {
                       : "Gratis"}
                 </span>
               </div>
-              <div className="flex justify-between border-t border-theme pt-3 font-bebas text-xl text-theme">
+              <div className="mt-1 flex justify-between border-t border-theme pt-2 font-bebas text-lg text-theme">
                 <span>TOTAL</span>
                 <span className="text-gold">{formatCLP(total)}</span>
               </div>
@@ -917,43 +945,43 @@ export default function CartDrawer() {
               </p>
             )}
 
-            <button
-              type="button"
-              disabled={
-                loading ||
-                (deliveryType === "despacho" && (!comuna || !selectedZone)) ||
-                needsPickupPolicy
-              }
-              onClick={handleCheckout}
-              className="mt-4 flex w-full flex-col items-center justify-center gap-1 rounded bg-gold px-4 py-[1.2rem] font-outfit text-black transition hover:bg-gold-light disabled:opacity-60"
-            >
-              <span className="flex items-center justify-center gap-2.5 text-[0.88rem] font-bold uppercase tracking-widest">
-                <CardIcon />
-                {loading ? "Redirigiendo…" : "Pagar con Mercado Pago"}
-              </span>
-              <span className="text-[0.65rem] font-normal normal-case tracking-normal text-black/70">
-                Tarjeta, débito o transferencia
-              </span>
-            </button>
+            <div className={`mt-3 grid gap-2 ${waNumber ? "grid-cols-2" : ""}`}>
+              <button
+                type="button"
+                disabled={
+                  loading ||
+                  (deliveryType === "despacho" && (!comuna || !selectedZone)) ||
+                  needsPickupPolicy
+                }
+                onClick={handleCheckout}
+                className="flex min-h-[48px] w-full flex-col items-center justify-center rounded bg-gold px-3 py-2 font-outfit text-black transition hover:bg-gold-light disabled:opacity-60"
+              >
+                <span className="flex items-center justify-center gap-1.5 text-[0.68rem] font-bold uppercase tracking-wider">
+                  <CardIcon />
+                  {loading ? "Redirigiendo" : "Mercado Pago"}
+                </span>
+                <span className="text-[0.55rem] font-normal normal-case tracking-normal text-black/70">
+                  pagar online
+                </span>
+              </button>
 
-            {waNumber && (
-              <>
+              {waNumber && (
                 <button
                   type="button"
                   disabled={
                     loading || waLoading || needsPickupPolicy || !!appliedCoupon
                   }
                   onClick={() => void handleWhatsApp()}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded border border-wa/30 py-3 font-outfit text-[0.75rem] font-semibold uppercase tracking-wider text-wa transition hover:border-wa hover:bg-wa/10 disabled:opacity-60 sm:text-[0.8rem]"
+                  className="flex min-h-[48px] w-full items-center justify-center rounded border border-wa/30 px-3 py-2 font-outfit text-[0.68rem] font-semibold uppercase tracking-wider text-wa transition hover:border-wa hover:bg-wa/10 disabled:opacity-60"
                 >
-                  {waLoading ? "Validando stock…" : "Enviar pedido por WhatsApp"}
+                  {waLoading ? "Validando" : "WhatsApp"}
                 </button>
-                {appliedCoupon && (
-                  <p className="mt-2 text-center text-[0.68rem] text-theme-muted">
-                    Para usar el cupón, finaliza con Mercado Pago.
-                  </p>
-                )}
-              </>
+              )}
+            </div>
+            {waNumber && appliedCoupon && (
+              <p className="mt-1.5 text-center text-[0.66rem] text-theme-muted">
+                Para usar el cupón, finaliza con Mercado Pago.
+              </p>
             )}
           </div>
         )}

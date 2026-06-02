@@ -154,6 +154,34 @@ export async function serviceGetOrder(orderId: number) {
   };
 }
 
+export async function serviceGetOrderByPaymentId(paymentId: string) {
+  const { url, key } = getServiceConfig();
+  const encodedPaymentId = encodeURIComponent(paymentId);
+  const res = await fetch(
+    `${url}/rest/v1/orders?mp_payment_id=eq.${encodedPaymentId}&select=id,status,mp_payment_id&limit=1`,
+    {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+      },
+      next: { revalidate: 0 },
+    }
+  );
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const err = data as { message?: string };
+    throw new Error(err?.message || `No se pudo leer pedido (${res.status})`);
+  }
+
+  const rows = (await res.json()) as {
+    id: number;
+    status: string;
+    mp_payment_id: string | null;
+  }[];
+  return rows[0] ?? null;
+}
+
 /** Actualiza pedido por REST (orders tiene RLS desactivado en fix-orders-rls.sql) */
 export async function serviceUpdateOrder(
   orderId: number,

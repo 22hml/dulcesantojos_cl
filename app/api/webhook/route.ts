@@ -5,6 +5,7 @@ import {
   extractPaymentIdFromWebhook,
   verifyMpWebhookSignature,
 } from "@/lib/mp-payment";
+import { serviceGetOrderByPaymentId } from "@/lib/supabase-service";
 
 async function handleNotification(req: Request): Promise<Response> {
   let body: { type?: string; data?: { id?: string | number }; action?: string } =
@@ -24,6 +25,12 @@ async function handleNotification(req: Request): Promise<Response> {
   }
 
   if (!verifyMpWebhookSignature(req, paymentId)) {
+    const paidOrder = await serviceGetOrderByPaymentId(paymentId);
+    if (paidOrder?.status === "paid") {
+      console.warn("Webhook MP: firma inválida duplicada ignorada", paymentId);
+      return new Response("OK", { status: 200 });
+    }
+
     console.error("Webhook MP: firma inválida", paymentId);
     return new Response("Unauthorized", { status: 401 });
   }
