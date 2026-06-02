@@ -32,6 +32,9 @@ export async function confirmOrderFromPayment(
       p_order_id: orderId,
       p_payment_id: String(paymentId),
     });
+    await serviceRpc<boolean>("redeem_coupon_for_order", {
+      p_order_id: orderId,
+    });
 
     const shouldSendEmails = markResult === true || (!markResult && !wasAlreadyPaid);
     if (shouldSendEmails) {

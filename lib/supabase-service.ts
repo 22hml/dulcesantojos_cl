@@ -146,6 +146,9 @@ export async function serviceGetOrder(orderId: number) {
     subtotal: number;
     delivery_cost: number;
     total: number;
+    coupon_id: number | null;
+    coupon_code: string | null;
+    coupon_discount: number | null;
     items: { id: number; name: string; qty: number; price: number }[];
     created_at: string;
   };

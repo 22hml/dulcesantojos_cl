@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎁 Tienes un regalo — Dulces Antojos</title>
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+  <!-- HEADER / LOGO -->
+  <tr>
+    <td style="background:#0d0d0d;border:1px solid rgba(232,168,32,0.25);border-bottom:none;border-radius:12px 12px 0 0;padding:32px 40px;text-align:center;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td align="center" style="padding-bottom:8px;">
+            <!-- Reemplaza esto con tu tag <img> si tienes el logo en una URL pública -->
+            <!-- <img src="https://dulcesantojos.cl/logo.png" alt="Dulces Antojos" width="120" style="display:block;margin:0 auto;"> -->
+            <div style="display:inline-block;text-align:center;">
+              <span style="font-family:Georgia,serif;font-size:28px;font-weight:700;color:#ffffff;letter-spacing:2px;text-transform:uppercase;">DULCES</span><br>
+              <span style="font-family:Georgia,serif;font-size:32px;font-style:italic;color:#E8A820;letter-spacing:1px;">Antojos</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td align="center">
+            <span style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#555;font-weight:500;">Pastelería · Desde 2015</span>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- BANNER REGALO -->
+  <tr>
+    <td style="background:linear-gradient(135deg,#c8920a,#E8A820,#f5c842,#E8A820,#c8920a);padding:22px 40px;text-align:center;">
+      <p style="margin:0;font-size:20px;letter-spacing:2px;text-transform:uppercase;color:#000;font-weight:800;">🎁 &nbsp;¡Tienes un regalo!&nbsp; 🎁</p>
+    </td>
+  </tr>
+
+  <!-- CUERPO PRINCIPAL -->
+  <tr>
+    <td style="background:#111111;border-left:1px solid rgba(232,168,32,0.15);border-right:1px solid rgba(232,168,32,0.15);padding:40px 40px 8px;">
+
+      <!-- Saludo -->
+      <h1 style="margin:0 0 12px;font-size:26px;color:#ffffff;font-weight:600;font-family:Georgia,serif;">
+        Hola, {{recipient_name}} 👋
+      </h1>
+      <p style="margin:0 0 28px;font-size:15px;color:#aaaaaa;line-height:1.7;">
+        Alguien especial pensó en ti y te envió un cupón de descuento para que disfrutes lo mejor de <strong style="color:#E8A820;">Dulces Antojos</strong>. ¡Es para que te des ese antojo que tanto mereces! 🍰
+      </p>
+
+      <!-- Separador decorativo -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+        <tr>
+          <td style="border-top:1px solid rgba(232,168,32,0.2);font-size:0;">&nbsp;</td>
+          <td width="30" align="center" style="color:#E8A820;font-size:14px;padding:0 10px;">✦</td>
+          <td style="border-top:1px solid rgba(232,168,32,0.2);font-size:0;">&nbsp;</td>
+        </tr>
+      </table>
+
+    </td>
+  </tr>
+
+  <!-- CAJA DEL CUPÓN -->
+  <tr>
+    <td style="background:#111111;border-left:1px solid rgba(232,168,32,0.15);border-right:1px solid rgba(232,168,32,0.15);padding:0 40px 32px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="background:#0d0d0d;border:2px dashed #E8A820;border-radius:12px;padding:32px;text-align:center;">
+
+            <p style="margin:0 0 8px;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#888;font-weight:600;">Tu cupón de descuento</p>
+
+            <!-- CÓDIGO DEL CUPÓN -->
+            <p style="margin:0 0 6px;font-family:'Courier New',Courier,monospace;font-size:36px;font-weight:800;color:#E8A820;letter-spacing:8px;text-transform:uppercase;">
+              {{coupon_code}}
+            </p>
+
+            <!-- VALOR DEL DESCUENTO -->
+            <p style="margin:0 0 20px;font-size:42px;font-weight:900;color:#ffffff;font-family:Georgia,serif;line-height:1;">
+              {{discount_value}}
+            </p>
+
+            <!-- Descripción del descuento (ej: "en tu próxima compra" o "en productos seleccionados") -->
+            <p style="margin:0 0 20px;font-size:13px;color:#888;letter-spacing:1px;">
+              {{discount_description}}
+            </p>
+
+            <!-- Botón CTA -->
+            <a href="{{store_url}}" style="display:inline-block;background:linear-gradient(135deg,#c8920a,#E8A820);color:#000;text-decoration:none;font-size:13px;font-weight:800;letter-spacing:3px;text-transform:uppercase;padding:14px 36px;border-radius:4px;">
+              Usar mi cupón
+            </a>
+
+            <!-- Vencimiento -->
+            <p style="margin:20px 0 0;font-size:11px;color:#555;letter-spacing:1px;">
+              Válido hasta el <strong style="color:#888;">{{expiry_date}}</strong> · Solo una vez
+            </p>
+
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- INSTRUCCIONES -->
+  <tr>
+    <td style="background:#111111;border-left:1px solid rgba(232,168,32,0.15);border-right:1px solid rgba(232,168,32,0.15);padding:8px 40px 36px;">
+
+      <!-- Separador decorativo -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+        <tr>
+          <td style="border-top:1px solid rgba(232,168,32,0.2);font-size:0;">&nbsp;</td>
+          <td width="30" align="center" style="color:#E8A820;font-size:14px;padding:0 10px;">✦</td>
+          <td style="border-top:1px solid rgba(232,168,32,0.2);font-size:0;">&nbsp;</td>
+        </tr>
+      </table>
+
+      <p style="margin:0 0 16px;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#888;font-weight:600;">¿Cómo usar tu cupón?</p>
+
+      <!-- Paso 1 -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;">
+        <tr>
+          <td width="32" valign="top">
+            <span style="display:inline-block;width:24px;height:24px;background:#E8A820;border-radius:50%;text-align:center;line-height:24px;font-size:12px;font-weight:800;color:#000;">1</span>
+          </td>
+          <td style="padding-left:12px;">
+            <p style="margin:0;font-size:14px;color:#aaa;line-height:1.6;">
+              Visita <a href="{{store_url}}" style="color:#E8A820;text-decoration:none;font-weight:600;">dulcesantojos.cl</a> y elige lo que más te antoje.
+            </p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Paso 2 -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;">
+        <tr>
+          <td width="32" valign="top">
+            <span style="display:inline-block;width:24px;height:24px;background:#E8A820;border-radius:50%;text-align:center;line-height:24px;font-size:12px;font-weight:800;color:#000;">2</span>
+          </td>
+          <td style="padding-left:12px;">
+            <p style="margin:0;font-size:14px;color:#aaa;line-height:1.6;">
+              Agrega los productos al carrito y procede al pago.
+            </p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Paso 3 -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:0;">
+        <tr>
+          <td width="32" valign="top">
+            <span style="display:inline-block;width:24px;height:24px;background:#E8A820;border-radius:50%;text-align:center;line-height:24px;font-size:12px;font-weight:800;color:#000;">3</span>
+          </td>
+          <td style="padding-left:12px;">
+            <p style="margin:0;font-size:14px;color:#aaa;line-height:1.6;">
+              Ingresa el código <strong style="color:#E8A820;font-family:'Courier New',monospace;letter-spacing:2px;">{{coupon_code}}</strong> al finalizar la compra.
+            </p>
+          </td>
+        </tr>
+      </table>
+
+    </td>
+  </tr>
+
+  <!-- MENSAJE OPCIONAL DEL REMITENTE -->
+  <tr>
+    <td style="background:#111111;border-left:1px solid rgba(232,168,32,0.15);border-right:1px solid rgba(232,168,32,0.15);padding:0 40px 36px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="background:#161616;border-left:3px solid #E8A820;border-radius:0 6px 6px 0;padding:18px 20px;">
+            <p style="margin:0 0 6px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#666;">Mensaje de quien te lo envía</p>
+            <p style="margin:0;font-size:14px;color:#ccc;font-style:italic;line-height:1.7;">
+              "{{sender_message}}"
+            </p>
+            <p style="margin:8px 0 0;font-size:12px;color:#E8A820;">— {{sender_name}}</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- FOOTER -->
+  <tr>
+    <td style="background:#0d0d0d;border:1px solid rgba(232,168,32,0.15);border-top:1px solid rgba(232,168,32,0.2);border-radius:0 0 12px 12px;padding:24px 40px;text-align:center;">
+      <p style="margin:0 0 10px;font-size:13px;color:#555;line-height:1.8;">
+        <a href="{{store_url}}" style="color:#E8A820;text-decoration:none;font-weight:600;">🍰 dulcesantojos.cl</a>
+      </p>
+      <p style="margin:0;font-size:11px;color:#333;line-height:1.8;">
+        Este cupón fue enviado automáticamente desde <strong style="color:#444;">Dulces Antojos</strong><br>
+        Si tienes dudas, escríbenos por
+        <a href="https://wa.me/56912345678" style="color:#555;text-decoration:none;">WhatsApp</a>
+      </p>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

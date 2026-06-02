@@ -32,6 +32,11 @@ const FIELD_IDS: Record<CustomerField, string> = {
   pickupPolicy: "cart-field-pickup-policy",
 };
 
+type AppliedCoupon = {
+  code: string;
+  discount_pct: number;
+};
+
 function focusCartField(field: CustomerField) {
   requestAnimationFrame(() => {
     const el = document.getElementById(FIELD_IDS[field]);
@@ -86,6 +91,10 @@ export default function CartDrawer() {
   const [customerEmail, setCustomerEmail] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [pickupPolicyAccepted, setPickupPolicyAccepted] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
   const [zones, setZones] = useState<DeliveryZone[]>(FALLBACK_DELIVERY_ZONES);
   const [loading, setLoading] = useState(false);
   const [waLoading, setWaLoading] = useState(false);
@@ -110,7 +119,13 @@ export default function CartDrawer() {
 
   const deliveryCost =
     deliveryType === "despacho" ? (selectedZone?.delivery_cost ?? 0) : 0;
-  const total = subtotal + deliveryCost;
+  const couponDiscount = appliedCoupon
+    ? Math.min(
+        subtotal,
+        Math.round(subtotal * (appliedCoupon.discount_pct / 100))
+      )
+    : 0;
+  const total = subtotal - couponDiscount + deliveryCost;
   const items = Object.values(cart);
 
   const fullAddress =
@@ -120,6 +135,11 @@ export default function CartDrawer() {
         ? regionAddress.trim()
         : "";
   const needsPickupPolicy = deliveryType === "retiro" && !pickupPolicyAccepted;
+
+  useEffect(() => {
+    setAppliedCoupon(null);
+    setCouponError(null);
+  }, [customerEmail, subtotal]);
 
   function fieldInputClass(field: CustomerField) {
     return fieldError === field
@@ -187,6 +207,51 @@ export default function CartDrawer() {
       return false;
     }
     return true;
+  }
+
+  async function applyCoupon() {
+    const code = couponCode.trim();
+    if (!code) {
+      setCouponError("Ingresa un código de cupón");
+      return;
+    }
+    if (!customerEmail.trim() || !isValidEmail(customerEmail.trim())) {
+      setCouponError("Ingresa un correo válido antes de aplicar el cupón");
+      focusCartField("email");
+      return;
+    }
+    if (subtotal <= 0) {
+      setCouponError("El carrito no tiene productos para aplicar descuento");
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponError(null);
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          email: customerEmail.trim(),
+          subtotal,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "No se pudo aplicar el cupón");
+      }
+      setAppliedCoupon({
+        code: data.code,
+        discount_pct: Number(data.discount_pct),
+      });
+      setCouponCode(data.code || code.toUpperCase());
+    } catch (e) {
+      setAppliedCoupon(null);
+      setCouponError(e instanceof Error ? e.message : "Cupón inválido");
+    } finally {
+      setCouponLoading(false);
+    }
   }
 
   function syncStockFromApi(products: Record<string, unknown> | undefined) {
@@ -302,7 +367,13 @@ export default function CartDrawer() {
         (s, i) => s + getDiscountedPrice(i) * i.qty,
         0
       );
-      const syncedTotal = syncedSubtotal + deliveryCost;
+      const syncedCouponDiscount = appliedCoupon
+        ? Math.min(
+            syncedSubtotal,
+            Math.round(syncedSubtotal * (appliedCoupon.discount_pct / 100))
+          )
+        : 0;
+      const syncedTotal = syncedSubtotal - syncedCouponDiscount + deliveryCost;
 
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -320,6 +391,7 @@ export default function CartDrawer() {
           customerEmail: customerEmail.trim(),
           observaciones: observaciones.trim() || undefined,
           deliveryCost,
+          couponCode: appliedCoupon?.code,
           clientOrigin:
             typeof window !== "undefined" ? window.location.origin : undefined,
         }),
@@ -353,9 +425,11 @@ export default function CartDrawer() {
               customer_phone: customerPhone.trim(),
               customer_email: customerEmail.trim() || null,
               observaciones: observaciones.trim() || null,
-              subtotal: syncedSubtotal,
+              subtotal: syncedSubtotal - syncedCouponDiscount,
               delivery_cost: deliveryCost,
               total: syncedTotal,
+              coupon_code: appliedCoupon?.code ?? null,
+              coupon_discount: syncedCouponDiscount || null,
               items: syncedItems.map((i) => ({
                 name: i.name,
                 qty: i.qty,
@@ -466,6 +540,11 @@ export default function CartDrawer() {
           {items.length === 0 ? (
             <div className="py-16 text-center">
               <span className="mb-4 block text-5xl opacity-30">🛒</span>
+              {error && (
+                <p className="mb-4 rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+                  {error}
+                </p>
+              )}
               <p className="text-[0.88rem] text-theme-muted">
                 Tu pedido está vacío.
                 <br />
@@ -760,11 +839,55 @@ export default function CartDrawer() {
 
         {items.length > 0 && (
           <div className="shrink-0 border-t border-theme px-5 py-4 sm:px-8 sm:py-5">
+            <div className="mb-4 rounded border border-theme bg-theme-card p-3">
+              <label className="mb-2 block text-[0.72rem] uppercase tracking-wider text-theme-muted">
+                Cupón de descuento
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Ej: HIJO"
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value.toUpperCase());
+                    setCouponError(null);
+                    setAppliedCoupon(null);
+                  }}
+                  className={`${inputClass} uppercase`}
+                />
+                <button
+                  type="button"
+                  onClick={() => void applyCoupon()}
+                  disabled={couponLoading}
+                  className="shrink-0 rounded border border-gold/40 px-3 py-2 font-outfit text-[0.7rem] font-semibold uppercase tracking-wider text-gold transition hover:bg-gold hover:text-black disabled:opacity-50"
+                >
+                  {couponLoading ? "..." : "Aplicar"}
+                </button>
+              </div>
+              {appliedCoupon && (
+                <p className="mt-2 text-[0.72rem] text-gold">
+                  Cupón {appliedCoupon.code} aplicado: -{appliedCoupon.discount_pct}%
+                </p>
+              )}
+              {couponError && (
+                <p className="mt-2 text-[0.72rem] text-red-400">{couponError}</p>
+              )}
+              <p className="mt-2 text-[0.68rem] text-theme-muted">
+                El cupón se valida con tu correo y se descuenta al pagar con
+                Mercado Pago.
+              </p>
+            </div>
             <div className="space-y-1 text-[0.86rem] text-theme-muted">
               <div className="flex justify-between">
                 <span>Subtotal</span>
                 <span>{formatCLP(subtotal)}</span>
               </div>
+              {appliedCoupon && couponDiscount > 0 && (
+                <div className="flex justify-between text-gold">
+                  <span>Cupón {appliedCoupon.code}</span>
+                  <span>-{formatCLP(couponDiscount)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span>
                   {deliveryType === "region"
@@ -814,14 +937,23 @@ export default function CartDrawer() {
             </button>
 
             {waNumber && (
-              <button
-                type="button"
-                disabled={loading || waLoading || needsPickupPolicy}
-                onClick={() => void handleWhatsApp()}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded border border-wa/30 py-3 font-outfit text-[0.75rem] font-semibold uppercase tracking-wider text-wa transition hover:border-wa hover:bg-wa/10 disabled:opacity-60 sm:text-[0.8rem]"
-              >
-                {waLoading ? "Validando stock…" : "Enviar pedido por WhatsApp"}
-              </button>
+              <>
+                <button
+                  type="button"
+                  disabled={
+                    loading || waLoading || needsPickupPolicy || !!appliedCoupon
+                  }
+                  onClick={() => void handleWhatsApp()}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded border border-wa/30 py-3 font-outfit text-[0.75rem] font-semibold uppercase tracking-wider text-wa transition hover:border-wa hover:bg-wa/10 disabled:opacity-60 sm:text-[0.8rem]"
+                >
+                  {waLoading ? "Validando stock…" : "Enviar pedido por WhatsApp"}
+                </button>
+                {appliedCoupon && (
+                  <p className="mt-2 text-center text-[0.68rem] text-theme-muted">
+                    Para usar el cupón, finaliza con Mercado Pago.
+                  </p>
+                )}
+              </>
             )}
           </div>
         )}

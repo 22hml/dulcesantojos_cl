@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   getDiscountedPrice,
+  type Coupon,
   type DeliveryZone,
   type Order,
   type OrderStatus,
@@ -47,7 +48,24 @@ const emptyProduct = (): Partial<Product> => ({
 
 const DISCOUNT_OPTIONS = [5, 10, 15, 20, 25, 30, 50] as const;
 
-type Tab = "products" | "orders" | "zones";
+type Tab = "products" | "orders" | "zones" | "coupons";
+
+const emptyCoupon = (): Partial<Coupon> => ({
+  code: "",
+  active: true,
+  discount_pct: 10,
+  max_uses: null,
+  max_uses_per_email: 1,
+  starts_at: null,
+  expires_at: null,
+});
+
+function toDateTimeLocal(value?: string | null): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 16);
+}
 
 function StatusBadge({ status }: { status: OrderStatus }) {
   return (
@@ -91,9 +109,17 @@ export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [zones, setZones] = useState<DeliveryZone[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [tab, setTab] = useState<Tab>("products");
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<Partial<Product> | null>(null);
+  const [editingCoupon, setEditingCoupon] = useState<Partial<Coupon> | null>(
+    null
+  );
+  const [couponSendEmails, setCouponSendEmails] = useState<Record<number, string>>(
+    {}
+  );
+  const [sendingCouponId, setSendingCouponId] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const [newZone, setNewZone] = useState({ comuna: "", delivery_cost: 2990 });
   const [heroSlots, setHeroSlots] = useState<HeroSlot[]>([]);
@@ -150,16 +176,18 @@ export default function AdminPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [pRes, oRes, zRes, hRes] = await Promise.all([
+      const [pRes, oRes, zRes, hRes, cRes] = await Promise.all([
         fetch("/api/admin/products"),
         fetch("/api/admin/orders"),
         fetch("/api/admin/delivery-zones", { cache: "no-store" }),
         fetch("/api/admin/hero-slots"),
+        fetch("/api/admin/coupons"),
       ]);
       if (pRes.ok) setProducts(await pRes.json());
       if (oRes.ok) setOrders(await oRes.json());
       if (zRes.ok) setZones(await zRes.json());
       if (hRes.ok) setHeroSlots(mergeHeroSlots(await hRes.json()));
+      if (cRes.ok) setCoupons(await cRes.json());
     } finally {
       setLoading(false);
     }
@@ -217,6 +245,48 @@ export default function AdminPage() {
     } else {
       const data = await res.json();
       alert(data.error || "Error al guardar");
+    }
+  }
+
+  async function saveCoupon() {
+    if (!editingCoupon?.code || !editingCoupon.discount_pct) return;
+    const isNew = !editingCoupon.id;
+    const res = await fetch("/api/admin/coupons", {
+      method: isNew ? "POST" : "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editingCoupon),
+    });
+    if (res.ok) {
+      setEditingCoupon(null);
+      loadData();
+    } else {
+      const data = await res.json();
+      alert(data.error || "Error al guardar cupón");
+    }
+  }
+
+  async function sendCoupon(coupon: Coupon) {
+    const email = couponSendEmails[coupon.id]?.trim();
+    if (!email) {
+      alert("Ingresa el correo destino");
+      return;
+    }
+
+    setSendingCouponId(coupon.id);
+    const res = await fetch("/api/admin/coupons/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ couponId: coupon.id, email }),
+    });
+    setSendingCouponId(null);
+
+    if (res.ok) {
+      setCouponSendEmails((prev) => ({ ...prev, [coupon.id]: "" }));
+      loadData();
+      alert("Cupón enviado");
+    } else {
+      const data = await res.json();
+      alert(data.error || "No se pudo enviar el cupón");
     }
   }
 
@@ -337,6 +407,7 @@ export default function AdminPage() {
   const tabLabels: { id: Tab; label: string; alert?: boolean }[] = [
     { id: "products", label: "Catálogo" },
     { id: "orders", label: "Pedidos", alert: paidUnprocessed > 0 },
+    { id: "coupons", label: "Cupones" },
     { id: "zones", label: "Despacho" },
   ];
 
@@ -852,6 +923,12 @@ export default function AdminPage() {
                         <p className="mt-1 text-lg font-bebas text-gold">
                           {formatCLP(o.total)}
                         </p>
+                        {o.coupon_code && (o.coupon_discount ?? 0) > 0 && (
+                          <p className="text-xs font-semibold uppercase tracking-wide text-gold">
+                            Cupón {o.coupon_code}: -
+                            {formatCLP(o.coupon_discount ?? 0)}
+                          </p>
+                        )}
                         <p className="text-sm text-theme-muted">
                           {new Date(o.created_at).toLocaleString("es-CL")}
                         </p>
@@ -906,6 +983,259 @@ export default function AdminPage() {
                     </ul>
                   </div>
                 ))
+              )}
+            </div>
+          </section>
+        )}
+
+        {tab === "coupons" && (
+          <section>
+            <SectionTitle hint={`${coupons.length} cupones creados`}>
+              Cupones de descuento
+            </SectionTitle>
+
+            <div className="mb-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setEditingCoupon(emptyCoupon())}
+                className="rounded bg-gold px-4 py-2 text-sm font-bold text-black"
+              >
+                + Crear cupón
+              </button>
+            </div>
+
+            {editingCoupon && (
+              <div className="mb-6 rounded-lg border border-gold/30 bg-theme-card p-4 sm:p-6">
+                <h3 className="mb-4 font-bebas text-xl text-theme">
+                  {editingCoupon.id ? "Editar cupón" : "Nuevo cupón"}
+                </h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs text-theme-muted">
+                      Código *
+                    </label>
+                    <input
+                      value={editingCoupon.code || ""}
+                      onChange={(e) =>
+                        setEditingCoupon({
+                          ...editingCoupon,
+                          code: e.target.value.toUpperCase().replace(/\s+/g, ""),
+                        })
+                      }
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-theme-muted">
+                      Descuento %
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={99}
+                      value={editingCoupon.discount_pct ?? ""}
+                      onChange={(e) =>
+                        setEditingCoupon({
+                          ...editingCoupon,
+                          discount_pct: Number(e.target.value),
+                        })
+                      }
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-theme-muted">
+                      Usos máximos totales
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      placeholder="Sin límite"
+                      value={editingCoupon.max_uses ?? ""}
+                      onChange={(e) =>
+                        setEditingCoupon({
+                          ...editingCoupon,
+                          max_uses: e.target.value
+                            ? Number(e.target.value)
+                            : null,
+                        })
+                      }
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-theme-muted">
+                      Usos por correo
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={editingCoupon.max_uses_per_email ?? 1}
+                      onChange={(e) =>
+                        setEditingCoupon({
+                          ...editingCoupon,
+                          max_uses_per_email: Number(e.target.value) || 1,
+                        })
+                      }
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-theme-muted">
+                      Disponible desde
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={toDateTimeLocal(editingCoupon.starts_at)}
+                      onChange={(e) =>
+                        setEditingCoupon({
+                          ...editingCoupon,
+                          starts_at: e.target.value
+                            ? new Date(e.target.value).toISOString()
+                            : null,
+                        })
+                      }
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-theme-muted">
+                      Vence el
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={toDateTimeLocal(editingCoupon.expires_at)}
+                      onChange={(e) =>
+                        setEditingCoupon({
+                          ...editingCoupon,
+                          expires_at: e.target.value
+                            ? new Date(e.target.value).toISOString()
+                            : null,
+                        })
+                      }
+                      className={inputCls}
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-sm text-theme">
+                    <input
+                      type="checkbox"
+                      checked={editingCoupon.active !== false}
+                      onChange={(e) =>
+                        setEditingCoupon({
+                          ...editingCoupon,
+                          active: e.target.checked,
+                        })
+                      }
+                    />
+                    Cupón activo
+                  </label>
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={saveCoupon}
+                    className="rounded bg-gold px-4 py-2 text-sm font-bold text-black"
+                  >
+                    Guardar cupón
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingCoupon(null)}
+                    className="rounded border border-theme px-4 py-2 text-sm text-theme-muted"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {coupons.length === 0 ? (
+                <p className="text-sm text-theme-muted">
+                  Aún no hay cupones creados.
+                </p>
+              ) : (
+                coupons.map((coupon) => {
+                  const isExpired = coupon.expires_at
+                    ? new Date(coupon.expires_at) < new Date()
+                    : false;
+                  return (
+                    <div
+                      key={coupon.id}
+                      className="rounded-lg border border-theme bg-theme-card p-4"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-bebas text-2xl tracking-wide text-gold">
+                              {coupon.code}
+                            </p>
+                            <span
+                              className={`rounded px-2 py-0.5 text-xs font-semibold uppercase ${
+                                coupon.active && !isExpired
+                                  ? "bg-green-500/15 text-green-300"
+                                  : "bg-red-500/15 text-red-300"
+                              }`}
+                            >
+                              {coupon.active && !isExpired ? "Activo" : "Inactivo"}
+                            </span>
+                          </div>
+                          <p className="text-sm text-theme-muted">
+                            -{coupon.discount_pct}% · Usos{" "}
+                            {coupon.redeemed_count ?? 0}
+                            {coupon.max_uses ? `/${coupon.max_uses}` : ""} ·
+                            Reservas {coupon.reserved_count ?? 0} · Por correo{" "}
+                            {coupon.max_uses_per_email}
+                          </p>
+                          {coupon.expires_at && (
+                            <p className="text-xs text-theme-muted">
+                              Vence:{" "}
+                              {new Date(coupon.expires_at).toLocaleString("es-CL")}
+                            </p>
+                          )}
+                          {coupon.last_sent_at && (
+                            <p className="text-xs text-theme-muted">
+                              Último envío: {coupon.last_sent_to} ·{" "}
+                              {new Date(coupon.last_sent_at).toLocaleString("es-CL")}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setEditingCoupon(coupon)}
+                          className="rounded border border-theme px-3 py-1 text-sm text-gold"
+                        >
+                          Editar
+                        </button>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-2 border-t border-theme pt-3">
+                        <input
+                          type="email"
+                          placeholder="correo@cliente.com"
+                          value={couponSendEmails[coupon.id] || ""}
+                          onChange={(e) =>
+                            setCouponSendEmails((prev) => ({
+                              ...prev,
+                              [coupon.id]: e.target.value,
+                            }))
+                          }
+                          className={`min-w-[220px] flex-1 ${inputCls}`}
+                        />
+                        <button
+                          type="button"
+                          disabled={sendingCouponId === coupon.id}
+                          onClick={() => void sendCoupon(coupon)}
+                          className="rounded border border-gold/40 px-3 py-2 text-sm font-semibold text-gold disabled:opacity-50"
+                        >
+                          {sendingCouponId === coupon.id
+                            ? "Enviando..."
+                            : "Enviar cupón por correo"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           </section>

@@ -42,6 +42,23 @@ export type DeliveryZone = {
   delivery_cost: number;
 };
 
+export type Coupon = {
+  id: number;
+  code: string;
+  active: boolean;
+  discount_pct: number;
+  max_uses: number | null;
+  max_uses_per_email: number;
+  starts_at?: string | null;
+  expires_at?: string | null;
+  last_sent_at?: string | null;
+  last_sent_to?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  redeemed_count?: number;
+  reserved_count?: number;
+};
+
 export type Order = {
   id: number;
   mp_preference_id: string | null;
@@ -57,6 +74,9 @@ export type Order = {
   subtotal: number;
   delivery_cost: number;
   total: number;
+  coupon_id?: number | null;
+  coupon_code?: string | null;
+  coupon_discount?: number | null;
   items: { id: number; name: string; qty: number; price: number }[];
   created_at: string;
 };

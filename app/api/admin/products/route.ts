@@ -18,7 +18,6 @@ export async function GET() {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  revalidateTag("home-data");
   return NextResponse.json(data);
 }
 
@@ -108,6 +107,7 @@ export async function PATCH(req: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+  revalidateTag("home-data");
   return NextResponse.json(data);
 }
 

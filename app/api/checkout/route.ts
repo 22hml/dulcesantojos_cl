@@ -22,8 +22,19 @@ import { isValidEmail } from "@/types/delivery";
 import { getDiscountedPrice, type CartItem } from "@/types";
 import type { DeliveryType } from "@/types/delivery";
 
+type CouponReservation = {
+  valid: boolean;
+  reason: string | null;
+  redemption_id: number | null;
+  coupon_id: number | null;
+  code: string | null;
+  discount_pct: number | null;
+  discount_amount: number;
+};
+
 export async function POST(req: Request) {
   let step = "inicio";
+  let reservedCouponRedemptionId: number | null = null;
 
   try {
     const body = await req.json();
@@ -38,6 +49,7 @@ export async function POST(req: Request) {
       observaciones,
       deliveryCost: clientDeliveryCost,
       clientOrigin,
+      couponCode,
     } = body as {
       cart: Record<string, CartItem>;
       deliveryType: DeliveryType;
@@ -49,6 +61,7 @@ export async function POST(req: Request) {
       observaciones?: string;
       deliveryCost?: number;
       clientOrigin?: string;
+      couponCode?: string;
     };
 
     const items = Object.values(cart) as CartItem[];
@@ -142,10 +155,44 @@ export async function POST(req: Request) {
       deliveryCost = 0;
     }
 
-    const subtotal = items.reduce(
+    const subtotalBeforeCoupon = items.reduce(
       (s, i) => s + getDiscountedPrice(i) * i.qty,
       0
     );
+    let couponId: number | null = null;
+    let normalizedCouponCode: string | null = null;
+    let couponDiscount = 0;
+
+    if (couponCode?.trim()) {
+      const rows = await serviceRpc<CouponReservation[]>(
+        "reserve_coupon_for_checkout",
+        {
+          p_code: couponCode.trim(),
+          p_email: normalizedCustomerEmail.toLowerCase(),
+          p_subtotal: subtotalBeforeCoupon,
+        }
+      );
+      const coupon = rows[0];
+      if (!coupon?.valid) {
+        return NextResponse.json(
+          { error: coupon?.reason || "Cupón inválido" },
+          { status: 400 }
+        );
+      }
+      if (!coupon.redemption_id || !coupon.coupon_id || !coupon.code) {
+        return NextResponse.json(
+          { error: "No se pudo reservar el cupón" },
+          { status: 500 }
+        );
+      }
+
+      reservedCouponRedemptionId = coupon.redemption_id;
+      couponId = coupon.coupon_id;
+      normalizedCouponCode = coupon.code;
+      couponDiscount = Math.min(subtotalBeforeCoupon, coupon.discount_amount);
+    }
+
+    const subtotal = Math.max(0, subtotalBeforeCoupon - couponDiscount);
     const total = subtotal + deliveryCost;
     const useSandbox = shouldUseMpSandbox();
     const backBase = resolveMpBackBase(req, clientOrigin, useSandbox);
@@ -173,6 +220,9 @@ export async function POST(req: Request) {
         p_items: orderItems,
         p_observaciones: observaciones?.trim() || null,
         p_customer_email: normalizedCustomerEmail,
+        p_coupon_id: couponId,
+        p_coupon_code: normalizedCouponCode,
+        p_coupon_discount: couponDiscount,
       });
     } catch (rpcErr) {
       console.warn("RPC create_order falló, insert directo:", rpcErr);
@@ -189,6 +239,9 @@ export async function POST(req: Request) {
         delivery_cost: deliveryCost,
         total,
         items: orderItems,
+        coupon_id: couponId,
+        coupon_code: normalizedCouponCode,
+        coupon_discount: couponDiscount,
       });
     }
 
@@ -199,15 +252,39 @@ export async function POST(req: Request) {
       );
     }
 
+    if (reservedCouponRedemptionId) {
+      const attached = await serviceRpc<boolean>("attach_coupon_redemption", {
+        p_redemption_id: reservedCouponRedemptionId,
+        p_order_id: orderId,
+      });
+      if (!attached) {
+        throw new Error("No se pudo asociar el cupón al pedido");
+      }
+    }
+
     step = "mercado-pago";
+    const mpProductItems =
+      couponDiscount > 0
+        ? [
+            {
+              id: "products",
+              title: normalizedCouponCode
+                ? `Pedido Dulces Antojos (cupón ${normalizedCouponCode})`
+                : "Pedido Dulces Antojos",
+              quantity: 1,
+              unit_price: Number(subtotal),
+              currency_id: "CLP",
+            },
+          ]
+        : items.map((i) => ({
+            id: String(i.id),
+            title: i.name,
+            quantity: i.qty,
+            unit_price: Number(getDiscountedPrice(i)),
+            currency_id: "CLP",
+          }));
     const mpItems = [
-      ...items.map((i) => ({
-        id: String(i.id),
-        title: i.name,
-        quantity: i.qty,
-        unit_price: Number(getDiscountedPrice(i)),
-        currency_id: "CLP",
-      })),
+      ...mpProductItems,
       ...(deliveryCost > 0
         ? [
             {
@@ -254,6 +331,16 @@ export async function POST(req: Request) {
       use_sandbox: useSandbox,
     });
   } catch (err) {
+    if (reservedCouponRedemptionId) {
+      try {
+        await serviceRpc<boolean>("release_coupon_redemption", {
+          p_redemption_id: reservedCouponRedemptionId,
+        });
+      } catch (releaseErr) {
+        console.warn("No se pudo liberar reserva de cupón:", releaseErr);
+      }
+    }
+
     console.error(`checkout [${step}]:`, err);
 
     const message = formatMpError(err);

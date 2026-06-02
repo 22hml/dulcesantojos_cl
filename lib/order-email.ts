@@ -22,6 +22,8 @@ export type PaidOrderEmailData = {
   subtotal: number;
   delivery_cost: number;
   total: number;
+  coupon_code?: string | null;
+  coupon_discount?: number | null;
   items: EmailOrderItem[];
   created_at?: string;
 };
@@ -65,6 +67,10 @@ function lineItemsText(order: PaidOrderEmailData): string {
         `- ${item.qty} x ${item.name}: ${formatCLP(item.price * item.qty)}`
     )
     .join("\n");
+}
+
+function itemsSubtotal(order: PaidOrderEmailData): number {
+  return order.items.reduce((sum, item) => sum + item.price * item.qty, 0);
 }
 
 function deliveryLine(order: PaidOrderEmailData): string {
@@ -132,6 +138,7 @@ function buildTemplateContext(
       : order.delivery_type === "despacho"
         ? formatCLP(order.delivery_cost)
         : "Gratis";
+  const couponDiscount = order.coupon_discount ?? 0;
 
   return {
     order_id: String(order.id),
@@ -145,6 +152,12 @@ function buildTemplateContext(
     delivery_commune: deliveryCommune,
     delivery_cost: deliveryCost,
     subtotal: formatCLP(order.subtotal),
+    products_subtotal: formatCLP(
+      couponDiscount > 0 ? itemsSubtotal(order) : order.subtotal
+    ),
+    has_coupon: couponDiscount > 0,
+    coupon_code: order.coupon_code || "",
+    coupon_discount: formatCLP(couponDiscount),
     total: formatCLP(order.total),
     mp_payment_id: paymentId,
     is_despacho: isDelivery,
@@ -214,7 +227,12 @@ async function buildAdminEmail(order: PaidOrderEmailData, paymentId: string) {
     "Detalle:",
     lineItemsText(order),
     "",
-    `Subtotal: ${formatCLP(order.subtotal)}`,
+    `Subtotal productos: ${formatCLP(
+      order.coupon_discount ? itemsSubtotal(order) : order.subtotal
+    )}`,
+    order.coupon_discount && order.coupon_code
+      ? `Cupón ${order.coupon_code}: -${formatCLP(order.coupon_discount)}`
+      : null,
     deliveryLine(order),
     `Total pagado: ${formatCLP(order.total)}`,
   ]
@@ -239,7 +257,12 @@ async function buildCustomerEmail(order: PaidOrderEmailData, paymentId: string) 
     "Detalle de tu compra:",
     lineItemsText(order),
     "",
-    `Subtotal: ${formatCLP(order.subtotal)}`,
+    `Subtotal productos: ${formatCLP(
+      order.coupon_discount ? itemsSubtotal(order) : order.subtotal
+    )}`,
+    order.coupon_discount && order.coupon_code
+      ? `Cupón ${order.coupon_code}: -${formatCLP(order.coupon_discount)}`
+      : null,
     deliveryLine(order),
     `Total pagado: ${formatCLP(order.total)}`,
     "",
@@ -315,4 +338,76 @@ export async function sendOrderPaidEmails(
 
   const customerMessage = await buildCustomerEmail(order, paymentId);
   await sendResendEmail({ to: customerEmail, ...customerMessage });
+}
+
+export async function sendCouponEmail({
+  to,
+  couponCode,
+  discountPct,
+  expiresAt,
+  storeUrl,
+  recipientName,
+  senderName,
+  senderMessage,
+}: {
+  to: string;
+  couponCode: string;
+  discountPct: number;
+  expiresAt?: string | null;
+  storeUrl: string;
+  recipientName?: string | null;
+  senderName?: string | null;
+  senderMessage?: string | null;
+}) {
+  if (!isValidEmail(to)) {
+    throw new Error("Correo destinatario inválido");
+  }
+
+  const expiresLabel = expiresAt
+    ? new Intl.DateTimeFormat("es-CL", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        timeZone: "America/Santiago",
+      }).format(new Date(expiresAt))
+    : "Sin fecha de vencimiento";
+  const safeRecipientName = recipientName?.trim() || "Cliente";
+  const safeSenderName = senderName?.trim() || "Dulces Antojos";
+  const safeSenderMessage =
+    senderMessage?.trim() ||
+    "Esperamos que disfrutes este regalo dulce preparado especialmente para ti.";
+  const discountValue = `${discountPct}% OFF`;
+  const discountDescription = "en tu próxima compra";
+
+  const template = await loadTemplate("email-cupon.html");
+  const html = renderTemplate(template, {
+    recipient_name: safeRecipientName,
+    coupon_code: couponCode,
+    discount_value: discountValue,
+    discount_description: discountDescription,
+    expiry_date: expiresLabel,
+    sender_message: safeSenderMessage,
+    sender_name: safeSenderName,
+    discount_pct: `${discountPct}%`,
+    expires_at: expiresLabel,
+    store_url: storeUrl,
+  });
+  const text = [
+    "Tienes un cupón de descuento en Dulces Antojos.",
+    "",
+    `Para: ${safeRecipientName}`,
+    `Cupón: ${couponCode}`,
+    `Descuento: ${discountValue} ${discountDescription}`,
+    `Vigencia: ${expiresLabel}`,
+    `Mensaje: ${safeSenderMessage}`,
+    "",
+    `Usalo en: ${storeUrl}`,
+  ].join("\n");
+
+  await sendResendEmail({
+    to,
+    subject: `Tu cupón ${couponCode} - Dulces Antojos`,
+    text,
+    html,
+  });
 }

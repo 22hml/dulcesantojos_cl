@@ -30,6 +30,8 @@ export type OrderWhatsAppInput = {
   subtotal: number;
   delivery_cost: number;
   total: number;
+  coupon_code?: string | null;
+  coupon_discount?: number | null;
   items: { name: string; qty: number; price: number }[];
 };
 
@@ -47,6 +49,8 @@ export function buildOrderWhatsAppMessage(
     (i) =>
       `${E.bullet} ${i.name} x${i.qty} - ${formatCLP(i.price)} c/u = ${formatCLP(i.price * i.qty)}`
   );
+  const itemsSubtotal = order.items.reduce((s, i) => s + i.price * i.qty, 0);
+  const couponDiscount = order.coupon_discount ?? 0;
 
   const entregaLine =
     order.delivery_type === "despacho"
@@ -86,7 +90,15 @@ export function buildOrderWhatsAppMessage(
     "*Productos:*",
     ...productLines,
     "",
-    `*Subtotal productos:* ${formatCLP(order.subtotal)}`,
+    `*Subtotal productos:* ${formatCLP(
+      couponDiscount > 0 ? itemsSubtotal : order.subtotal
+    )}`,
+    couponDiscount > 0 && order.coupon_code
+      ? `*Cupón ${order.coupon_code}:* -${formatCLP(couponDiscount)}`
+      : null,
+    couponDiscount > 0
+      ? `*Subtotal con descuento:* ${formatCLP(order.subtotal)}`
+      : null,
     despachoLine,
     `*TOTAL:* ${formatCLP(order.total)}`,
     "",
