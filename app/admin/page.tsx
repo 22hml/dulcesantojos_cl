@@ -366,6 +366,237 @@ export default function AdminPage() {
         discount_pct: editing.discount_pct ?? null,
       })
     : 0;
+  const productEditor = editing ? (
+    <div className="mb-6 rounded-lg border border-gold/30 bg-theme-card p-4 sm:p-6">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h3 className="mb-1 font-bebas text-xl text-theme">
+            {editing.id ? "Editar producto" : "Nuevo producto"}
+          </h3>
+          <p className="text-xs text-theme-muted">
+            Completa los campos obligatorios (*) y sube una foto para el catálogo.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setEditing(null)}
+          className="rounded border border-theme px-2 py-1 text-xs font-bold text-theme-muted hover:border-gold hover:text-gold"
+          aria-label="Cerrar editor"
+        >
+          X
+        </button>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className="mb-1 block text-xs text-theme-muted">Nombre *</label>
+          <input
+            value={editing.name || ""}
+            onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+            className={inputCls}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-theme-muted">Categoría</label>
+          <input
+            value={editing.category || ""}
+            onChange={(e) => setEditing({ ...editing, category: e.target.value })}
+            className={inputCls}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-theme-muted">Precio CLP *</label>
+          <input
+            type="number"
+            value={editing.price || ""}
+            onChange={(e) =>
+              setEditing({ ...editing, price: Number(e.target.value) })
+            }
+            className={inputCls}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-theme-muted">Unidad</label>
+          <input
+            value={editing.unit || ""}
+            onChange={(e) => setEditing({ ...editing, unit: e.target.value })}
+            className={inputCls}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-theme-muted">Stock</label>
+          <input
+            type="number"
+            value={editing.stock ?? ""}
+            onChange={(e) =>
+              setEditing({ ...editing, stock: Number(e.target.value) })
+            }
+            className={inputCls}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-theme-muted">
+            Sección tienda
+          </label>
+          <select
+            value={editing.mode || "pasteleria"}
+            onChange={(e) => setEditing({ ...editing, mode: e.target.value })}
+            className={inputCls}
+          >
+            <option value="pasteleria">Pastelería</option>
+            <option value="shop">Shop Cajas</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-theme-muted">
+            Etiqueta destacada
+          </label>
+          <input
+            placeholder="Más pedida, Nuevo…"
+            value={editing.highlight || ""}
+            onChange={(e) => setEditing({ ...editing, highlight: e.target.value })}
+            className={inputCls}
+          />
+        </div>
+        <div className="rounded border border-theme bg-theme-elevated p-3 sm:col-span-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-theme">
+            <input
+              type="checkbox"
+              checked={editing.discount_pct != null}
+              onChange={(e) =>
+                setEditing({
+                  ...editing,
+                  discount_pct: e.target.checked ? 10 : null,
+                })
+              }
+            />
+            Producto con descuento
+          </label>
+          {editing.discount_pct != null && (
+            <div className="mt-3 space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {DISCOUNT_OPTIONS.map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => setEditing({ ...editing, discount_pct: pct })}
+                    className={`rounded px-2.5 py-1 text-xs font-semibold ${
+                      editing.discount_pct === pct
+                        ? "bg-red-500 text-white"
+                        : "border border-theme text-theme-muted"
+                    }`}
+                  >
+                    {pct}%
+                  </button>
+                ))}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
+                <div>
+                  <label className="mb-1 block text-xs text-theme-muted">
+                    Porcentaje
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={editing.discount_pct ?? ""}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      setEditing({
+                        ...editing,
+                        discount_pct: Number.isFinite(value)
+                          ? Math.min(99, Math.max(1, value))
+                          : null,
+                      });
+                    }}
+                    className={inputCls}
+                  />
+                </div>
+                <div className="rounded border border-red-500/25 bg-red-500/10 px-3 py-2 text-sm text-theme">
+                  <span className="text-theme-muted">Precio final:</span>{" "}
+                  <strong className="text-gold">
+                    {formatCLP(editingFinalPrice)}
+                  </strong>
+                  <span className="ml-2 text-xs text-theme-muted">
+                    antes {formatCLP(Number(editing.price) || 0)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        <p className="text-xs text-theme-muted sm:col-span-2">
+          Para la foto del inicio, usa la sección{" "}
+          <strong className="text-gold">Fotos del inicio</strong> (arriba):
+          casilla + tipo Producto o Foto libre.
+        </p>
+        <label className="flex items-end gap-2 pb-2 text-sm text-theme">
+          <input
+            type="checkbox"
+            checked={editing.active !== false}
+            onChange={(e) =>
+              setEditing({ ...editing, active: e.target.checked })
+            }
+          />
+          Visible en la tienda
+        </label>
+      </div>
+      <div className="mt-3">
+        <label className="mb-1 block text-xs text-theme-muted">Descripción</label>
+        <textarea
+          value={editing.description || ""}
+          onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+          className={inputCls}
+          rows={3}
+        />
+      </div>
+      <div className="mt-4 rounded border border-dashed border-theme p-4">
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-theme-muted">
+          Imagen del producto
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="cursor-pointer rounded border border-theme px-3 py-2 text-sm text-theme hover:border-gold">
+            {uploading ? "Subiendo…" : "📷 Elegir archivo"}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleImageUpload(f);
+              }}
+            />
+          </label>
+          {editing.image_url && (
+            <div className="relative h-20 w-20 overflow-hidden rounded">
+              <Image
+                src={editing.image_url}
+                alt="Vista previa"
+                fill
+                className="object-cover"
+                unoptimized={isSupabaseStorageUrl(editing.image_url)}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="mt-4 flex gap-2">
+        <button
+          type="button"
+          onClick={saveProduct}
+          className="rounded bg-gold px-4 py-2 text-sm font-bold text-black"
+        >
+          Guardar producto
+        </button>
+        <button
+          type="button"
+          onClick={() => setEditing(null)}
+          className="rounded border border-theme px-4 py-2 text-sm text-theme-muted"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  ) : null;
 
   if (!authed) {
     return (
@@ -505,258 +736,7 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {editing && (
-              <div className="mb-6 rounded-lg border border-gold/30 bg-theme-card p-4 sm:p-6">
-                <h3 className="mb-1 font-bebas text-xl text-theme">
-                  {editing.id ? "Editar producto" : "Nuevo producto"}
-                </h3>
-                <p className="mb-4 text-xs text-theme-muted">
-                  Completa los campos obligatorios (*) y sube una foto para el
-                  catálogo.
-                </p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-xs text-theme-muted">
-                      Nombre *
-                    </label>
-                    <input
-                      value={editing.name || ""}
-                      onChange={(e) =>
-                        setEditing({ ...editing, name: e.target.value })
-                      }
-                      className={inputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-theme-muted">
-                      Categoría
-                    </label>
-                    <input
-                      value={editing.category || ""}
-                      onChange={(e) =>
-                        setEditing({ ...editing, category: e.target.value })
-                      }
-                      className={inputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-theme-muted">
-                      Precio CLP *
-                    </label>
-                    <input
-                      type="number"
-                      value={editing.price || ""}
-                      onChange={(e) =>
-                        setEditing({
-                          ...editing,
-                          price: Number(e.target.value),
-                        })
-                      }
-                      className={inputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-theme-muted">
-                      Unidad
-                    </label>
-                    <input
-                      value={editing.unit || ""}
-                      onChange={(e) =>
-                        setEditing({ ...editing, unit: e.target.value })
-                      }
-                      className={inputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-theme-muted">
-                      Stock
-                    </label>
-                    <input
-                      type="number"
-                      value={editing.stock ?? ""}
-                      onChange={(e) =>
-                        setEditing({
-                          ...editing,
-                          stock: Number(e.target.value),
-                        })
-                      }
-                      className={inputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-theme-muted">
-                      Sección tienda
-                    </label>
-                    <select
-                      value={editing.mode || "pasteleria"}
-                      onChange={(e) =>
-                        setEditing({ ...editing, mode: e.target.value })
-                      }
-                      className={inputCls}
-                    >
-                      <option value="pasteleria">Pastelería</option>
-                      <option value="shop">Shop Cajas</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-theme-muted">
-                      Etiqueta destacada
-                    </label>
-                    <input
-                      placeholder="Más pedida, Nuevo…"
-                      value={editing.highlight || ""}
-                      onChange={(e) =>
-                        setEditing({ ...editing, highlight: e.target.value })
-                      }
-                      className={inputCls}
-                    />
-                  </div>
-                  <div className="rounded border border-theme bg-theme-elevated p-3 sm:col-span-2">
-                    <label className="flex items-center gap-2 text-sm font-medium text-theme">
-                      <input
-                        type="checkbox"
-                        checked={editing.discount_pct != null}
-                        onChange={(e) =>
-                          setEditing({
-                            ...editing,
-                            discount_pct: e.target.checked ? 10 : null,
-                          })
-                        }
-                      />
-                      Producto con descuento
-                    </label>
-                    {editing.discount_pct != null && (
-                      <div className="mt-3 space-y-3">
-                        <div className="flex flex-wrap gap-2">
-                          {DISCOUNT_OPTIONS.map((pct) => (
-                            <button
-                              key={pct}
-                              type="button"
-                              onClick={() =>
-                                setEditing({ ...editing, discount_pct: pct })
-                              }
-                              className={`rounded px-2.5 py-1 text-xs font-semibold ${
-                                editing.discount_pct === pct
-                                  ? "bg-red-500 text-white"
-                                  : "border border-theme text-theme-muted"
-                              }`}
-                            >
-                              {pct}%
-                            </button>
-                          ))}
-                        </div>
-                        <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
-                          <div>
-                            <label className="mb-1 block text-xs text-theme-muted">
-                              Porcentaje
-                            </label>
-                            <input
-                              type="number"
-                              min={1}
-                              max={99}
-                              value={editing.discount_pct ?? ""}
-                              onChange={(e) => {
-                                const value = Number(e.target.value);
-                                setEditing({
-                                  ...editing,
-                                  discount_pct: Number.isFinite(value)
-                                    ? Math.min(99, Math.max(1, value))
-                                    : null,
-                                });
-                              }}
-                              className={inputCls}
-                            />
-                          </div>
-                          <div className="rounded border border-red-500/25 bg-red-500/10 px-3 py-2 text-sm text-theme">
-                            <span className="text-theme-muted">Precio final:</span>{" "}
-                            <strong className="text-gold">
-                              {formatCLP(editingFinalPrice)}
-                            </strong>
-                            <span className="ml-2 text-xs text-theme-muted">
-                              antes {formatCLP(Number(editing.price) || 0)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xs text-theme-muted sm:col-span-2">
-                    Para la foto del inicio, usa la sección{" "}
-                    <strong className="text-gold">Fotos del inicio</strong> (arriba):
-                    casilla + tipo Producto o Foto libre.
-                  </p>
-                  <label className="flex items-end gap-2 pb-2 text-sm text-theme">
-                    <input
-                      type="checkbox"
-                      checked={editing.active !== false}
-                      onChange={(e) =>
-                        setEditing({ ...editing, active: e.target.checked })
-                      }
-                    />
-                    Visible en la tienda
-                  </label>
-                </div>
-                <div className="mt-3">
-                  <label className="mb-1 block text-xs text-theme-muted">
-                    Descripción
-                  </label>
-                  <textarea
-                    value={editing.description || ""}
-                    onChange={(e) =>
-                      setEditing({ ...editing, description: e.target.value })
-                    }
-                    className={inputCls}
-                    rows={3}
-                  />
-                </div>
-                <div className="mt-4 rounded border border-dashed border-theme p-4">
-                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-theme-muted">
-                    Imagen del producto
-                  </p>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <label className="cursor-pointer rounded border border-theme px-3 py-2 text-sm text-theme hover:border-gold">
-                      {uploading ? "Subiendo…" : "📷 Elegir archivo"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) handleImageUpload(f);
-                        }}
-                      />
-                    </label>
-                    {editing.image_url && (
-                      <div className="relative h-20 w-20 overflow-hidden rounded">
-                        <Image
-                          src={editing.image_url}
-                          alt="Vista previa"
-                          fill
-                          className="object-cover"
-                          unoptimized={isSupabaseStorageUrl(editing.image_url)}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="mt-4 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={saveProduct}
-                    className="rounded bg-gold px-4 py-2 text-sm font-bold text-black"
-                  >
-                    Guardar producto
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditing(null)}
-                    className="rounded border border-theme px-4 py-2 text-sm text-theme-muted"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            )}
+            {editing && !editing.id && productEditor}
 
             <div className="space-y-3">
               {filteredProducts.length === 0 ? (
@@ -769,76 +749,78 @@ export default function AdminPage() {
                   const hasDiscount = !!p.discount_pct;
 
                   return (
-                    <div
-                      key={p.id}
-                      className="flex flex-wrap gap-4 rounded-lg border border-theme bg-theme-card p-4"
-                    >
-                      {p.image_url ? (
-                        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded">
-                          <Image
-                            src={p.image_url}
-                            alt={p.name}
-                            fill
-                            className="object-cover"
-                            unoptimized={isSupabaseStorageUrl(p.image_url)}
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex h-20 w-20 items-center justify-center rounded bg-theme-elevated text-3xl">
-                          🧁
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-theme">
-                          {p.name}
-                          {productHeroSlot[p.id] != null && (
-                            <span className="ml-2 rounded bg-gold/15 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-gold">
-                              Inicio #{productHeroSlot[p.id]}
-                            </span>
-                          )}
-                          {hasDiscount && (
-                            <span className="ml-2 rounded bg-red-500 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-white">
-                              -{p.discount_pct}% OFF
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-xs text-theme-muted">
-                          {p.mode === "pasteleria" ? "🎂 Pastelería" : "📦 Shop"} ·{" "}
-                          {p.category || "Sin categoría"} ·{" "}
-                          {hasDiscount ? (
-                            <>
-                              <span className="line-through">
-                                {formatCLP(p.price)}
-                              </span>{" "}
-                              <span className="font-semibold text-gold">
-                                {formatCLP(finalPrice)}
+                    <div key={p.id} className="space-y-3">
+                      <div className="flex flex-wrap gap-4 rounded-lg border border-theme bg-theme-card p-4">
+                        {p.image_url ? (
+                          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded">
+                            <Image
+                              src={p.image_url}
+                              alt={p.name}
+                              fill
+                              className="object-cover"
+                              unoptimized={isSupabaseStorageUrl(p.image_url)}
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex h-20 w-20 items-center justify-center rounded bg-theme-elevated text-3xl">
+                            🧁
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-theme">
+                            {p.name}
+                            {productHeroSlot[p.id] != null && (
+                              <span className="ml-2 rounded bg-gold/15 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-gold">
+                                Inicio #{productHeroSlot[p.id]}
                               </span>
-                            </>
-                          ) : (
-                            formatCLP(p.price)
-                          )}{" "}
-                          · Stock {p.stock}
-                          {!p.active && (
-                            <span className="ml-2 text-red-400">(oculto)</span>
-                          )}
-                        </p>
+                            )}
+                            {hasDiscount && (
+                              <span className="ml-2 rounded bg-red-500 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-white">
+                                -{p.discount_pct}% OFF
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs text-theme-muted">
+                            {p.mode === "pasteleria" ? "🎂 Pastelería" : "📦 Shop"} ·{" "}
+                            {p.category || "Sin categoría"} ·{" "}
+                            {hasDiscount ? (
+                              <>
+                                <span className="line-through">
+                                  {formatCLP(p.price)}
+                                </span>{" "}
+                                <span className="font-semibold text-gold">
+                                  {formatCLP(finalPrice)}
+                                </span>
+                              </>
+                            ) : (
+                              formatCLP(p.price)
+                            )}{" "}
+                            · Stock {p.stock}
+                            {!p.active && (
+                              <span className="ml-2 text-red-400">(oculto)</span>
+                            )}
+                          </p>
+                        </div>
+                        <div className="flex gap-2 self-center">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEditing(editing?.id === p.id ? null : p)
+                            }
+                            className="rounded border border-theme px-3 py-1 text-sm text-gold"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteProduct(p.id)}
+                            className="rounded border border-red-500/40 px-3 py-1 text-sm text-red-400"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex gap-2 self-center">
-                        <button
-                          type="button"
-                          onClick={() => setEditing(p)}
-                          className="rounded border border-theme px-3 py-1 text-sm text-gold"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteProduct(p.id)}
-                          className="rounded border border-red-500/40 px-3 py-1 text-sm text-red-400"
-                        >
-                          Eliminar
-                        </button>
-                      </div>
+                      {editing?.id === p.id && productEditor}
                     </div>
                   );
                 })

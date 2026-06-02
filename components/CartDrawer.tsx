@@ -105,6 +105,31 @@ export default function CartDrawer() {
   useEffect(() => {
     if (!isOpen) return;
 
+    const scrollY = window.scrollY;
+    const previous = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
+    };
+
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+
+    return () => {
+      document.body.style.overflow = previous.overflow;
+      document.body.style.position = previous.position;
+      document.body.style.top = previous.top;
+      document.body.style.width = previous.width;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
     fetch("/api/delivery-zones", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
@@ -508,11 +533,11 @@ export default function CartDrawer() {
 
   return (
     <div
-      className="fixed inset-0 z-[900] flex justify-end backdrop-blur-sm"
+      className="fixed inset-0 z-[900] flex touch-none justify-end overflow-hidden backdrop-blur-sm"
       style={{ background: "var(--overlay)" }}
       onClick={(e) => e.target === e.currentTarget && closeCart()}
     >
-      <aside className="relative flex h-full w-full max-w-[440px] animate-[dIn_0.3s_ease] flex-col border-l border-theme bg-theme-elevated">
+      <aside className="relative flex h-full w-full max-w-[440px] animate-[dIn_0.3s_ease] touch-auto flex-col border-l border-theme bg-theme-elevated">
         {loading && (
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-theme-elevated/95 px-6 text-center backdrop-blur-sm">
             <span className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-gold border-t-transparent" />
@@ -538,7 +563,7 @@ export default function CartDrawer() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-8 sm:py-6">
+        <div className="flex-1 overscroll-contain overflow-y-auto px-5 py-5 sm:px-8 sm:py-6">
           {items.length === 0 ? (
             <div className="py-16 text-center">
               <span className="mb-4 block text-5xl opacity-30">🛒</span>

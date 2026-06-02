@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { getDiscountedPrice, type Product } from "@/types";
 import { formatCLP } from "@/lib/format";
@@ -33,12 +33,30 @@ function ZoomIcon({ className = "" }: { className?: string }) {
 export default function ProductCard({ product }: Props) {
   const { addItem, setQty, cart } = useCart();
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [descriptionOpen, setDescriptionOpen] = useState(false);
+  const [descriptionCanExpand, setDescriptionCanExpand] = useState(false);
+  const descriptionRef = useRef<HTMLSpanElement>(null);
   const qty = cart[product.id]?.qty ?? 0;
   const outOfStock = product.stock <= 0;
   const stock = getStockStatus(product.stock);
   const emoji = getProductEmoji(product);
   const finalPrice = getDiscountedPrice(product);
   const hasDiscount = !!product.discount_pct;
+
+  useEffect(() => {
+    const el = descriptionRef.current;
+    if (!el) return;
+
+    function updateOverflow() {
+      const current = descriptionRef.current;
+      if (!current || descriptionOpen) return;
+      setDescriptionCanExpand(current.scrollHeight > current.clientHeight + 1);
+    }
+
+    updateOverflow();
+    window.addEventListener("resize", updateOverflow);
+    return () => window.removeEventListener("resize", updateOverflow);
+  }, [product.description, descriptionOpen]);
 
   function changeQty(delta: number, openDrawer = false) {
     const next = qty + delta;
@@ -119,9 +137,30 @@ export default function ProductCard({ product }: Props) {
             {product.name}
           </h3>
           {product.description && (
-            <p className="mt-2 line-clamp-2 text-[0.82rem] font-light leading-relaxed text-gray">
-              {product.description}
-            </p>
+            <button
+              type="button"
+              onClick={() =>
+                descriptionCanExpand && setDescriptionOpen((open) => !open)
+              }
+              className={`mt-2 block w-full text-left ${
+                descriptionCanExpand ? "cursor-pointer" : "cursor-default"
+              }`}
+              aria-expanded={descriptionOpen}
+            >
+              <span
+                ref={descriptionRef}
+                className={`block overflow-hidden text-[0.82rem] font-light leading-relaxed text-gray transition-[max-height] duration-200 ${
+                  descriptionOpen ? "max-h-none" : "max-h-[3.2rem]"
+                }`}
+              >
+                {product.description}
+              </span>
+              {descriptionCanExpand && (
+                <span className="mt-1 block text-[0.65rem] font-semibold uppercase tracking-wider text-gold/80">
+                  {descriptionOpen ? "Ver menos" : "Ver descripción completa"}
+                </span>
+              )}
+            </button>
           )}
           <div className="mt-5 flex items-center justify-between gap-4">
             <div>
