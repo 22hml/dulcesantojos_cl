@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { Bebas_Neue, Dancing_Script, Outfit } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import JsonLd from "@/components/JsonLd";
 import { CartProvider } from "@/context/CartContext";
 import { ShopModeProvider } from "@/context/ShopModeContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { buildBakeryJsonLd } from "@/lib/seo/site";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -81,6 +83,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="font-outfit antialiased bg-theme-base text-theme">
+        <JsonLd data={buildBakeryJsonLd()} />
         <ThemeProvider>
           <ShopModeProvider>
             <CartProvider>{children}</CartProvider>

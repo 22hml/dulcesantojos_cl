@@ -31,29 +31,55 @@ export async function fetchMpPayment(
   return res.json() as Promise<MpPayment>;
 }
 
+/** Valor de data.id en la URL tal como lo firma Mercado Pago (query `data.id`). */
+export function getMpWebhookDataIdFromUrl(req: Request): string | null {
+  const url = new URL(req.url);
+  const raw =
+    url.searchParams.get("data.id") ?? url.searchParams.get("data_id");
+  const trimmed = raw?.trim();
+  return trimmed ? trimmed : null;
+}
+
+/** Manifest HMAC según documentación oficial de Mercado Pago. */
+export function buildMpWebhookManifest(
+  dataId: string | null,
+  requestId: string | null,
+  ts: string
+): string {
+  let manifest = "";
+  if (dataId) {
+    manifest += `id:${dataId.toLowerCase()};`;
+  }
+  if (requestId) {
+    manifest += `request-id:${requestId};`;
+  }
+  manifest += `ts:${ts};`;
+  return manifest;
+}
+
 /** Valida x-signature de Mercado Pago (opcional si hay MP_WEBHOOK_SECRET). */
-export function verifyMpWebhookSignature(
-  req: Request,
-  dataId: string
-): boolean {
+export function verifyMpWebhookSignature(req: Request): boolean {
   const secret = process.env.MP_WEBHOOK_SECRET?.trim();
   if (!secret) return true;
 
-  const xSignature = req.headers.get("x-signature");
-  const xRequestId = req.headers.get("x-request-id");
-  if (!xSignature || !xRequestId) return false;
+  const xSignature = req.headers.get("x-signature")?.trim();
+  if (!xSignature) return false;
+
+  const xRequestId = req.headers.get("x-request-id")?.trim() || null;
 
   const parts = Object.fromEntries(
     xSignature.split(",").map((p) => {
-      const [k, v] = p.split("=");
-      return [k.trim(), v?.trim() ?? ""];
+      const eq = p.indexOf("=");
+      if (eq === -1) return [p.trim(), ""];
+      return [p.slice(0, eq).trim(), p.slice(eq + 1).trim()];
     })
   );
   const ts = parts.ts;
   const v1 = parts.v1;
   if (!ts || !v1) return false;
 
-  const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+  const dataId = getMpWebhookDataIdFromUrl(req);
+  const manifest = buildMpWebhookManifest(dataId, xRequestId, ts);
   const expected = createHmac("sha256", secret)
     .update(manifest)
     .digest("hex");
@@ -71,7 +97,10 @@ export function extractPaymentIdFromWebhook(
 ): string | null {
   const url = new URL(req.url);
   const topic = url.searchParams.get("topic") || url.searchParams.get("type");
-  const queryId = url.searchParams.get("id") || url.searchParams.get("data.id");
+  const queryDataId = getMpWebhookDataIdFromUrl(req);
+  const legacyId = url.searchParams.get("id");
+
+  const queryId = queryDataId || legacyId;
 
   if (queryId) {
     if (
@@ -89,6 +118,13 @@ export function extractPaymentIdFromWebhook(
   }
 
   if (body?.action === "payment.updated" && body.data?.id != null) {
+    return String(body.data.id);
+  }
+
+  if (
+    body?.action?.startsWith("payment.") &&
+    body.data?.id != null
+  ) {
     return String(body.data.id);
   }
 
