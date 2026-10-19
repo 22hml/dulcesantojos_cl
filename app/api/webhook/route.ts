@@ -24,7 +24,7 @@ async function handleNotification(req: Request): Promise<Response> {
     return new Response("OK", { status: 200 });
   }
 
-  if (!verifyMpWebhookSignature(req, paymentId)) {
+  if (!verifyMpWebhookSignature(req)) {
     const paidOrder = await serviceGetOrderByPaymentId(paymentId);
     if (paidOrder?.status === "paid") {
       console.warn("Webhook MP: firma inválida duplicada ignorada", paymentId);

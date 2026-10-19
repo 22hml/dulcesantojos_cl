@@ -69,6 +69,9 @@ export default function HeroFull({ initialItems }: Props) {
             Pastelería · Desde 2015
           </span>
           <h1 className="mb-3 sm:mb-4">
+            <span className="sr-only">
+              Pastelería y cajas para tortas en Santiago —{" "}
+            </span>
             <span className="font-bebas block text-[clamp(2.75rem,11vw,7rem)] leading-[0.9] tracking-wide text-white sm:leading-[0.88]">
               DULCES
             </span>
