@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useShopMode } from "@/context/ShopModeContext";
-import { getCategorySlugForLabel } from "@/lib/seo/categories";
 import type { Product } from "@/types";
 import type { ShopMode } from "@/context/ShopModeContext";
 import ProductCard from "./ProductCard";
@@ -61,34 +59,20 @@ export default function Catalog({ initialProducts, demoMode = false }: Props) {
           </h2>
         </div>
         <div className="flex flex-wrap gap-2">
-          {categories.map((cat) => {
-            const slug = getCategorySlugForLabel(cat);
-            const active = filter === cat;
-            const className = `rounded-sm border px-4 py-2 font-outfit text-[0.75rem] uppercase tracking-wider transition ${
-              active
-                ? "border-gold bg-gold font-semibold text-black"
-                : "border-border bg-transparent text-gray hover:border-gold hover:text-theme"
-            }`;
-
-            if (slug && cat !== "Todos") {
-              return (
-                <Link key={cat} href={`/${slug}`} className={className}>
-                  {cat}
-                </Link>
-              );
-            }
-
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setFilter(cat)}
-                className={className}
-              >
-                {cat}
-              </button>
-            );
-          })}
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setFilter(cat)}
+              className={`rounded-sm border px-4 py-2 font-outfit text-[0.75rem] uppercase tracking-wider transition ${
+                filter === cat
+                  ? "border-gold bg-gold font-semibold text-black"
+                  : "border-border bg-transparent text-gray hover:border-gold hover:text-theme"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
       </div>
 

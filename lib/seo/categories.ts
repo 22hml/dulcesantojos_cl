@@ -159,25 +159,6 @@ export function getAllCategorySlugs(): CategorySlug[] {
   return CATEGORY_PAGES.map((c) => c.slug);
 }
 
-/** Enlaza nombres de categoría del catálogo a una URL SEO cuando existe. */
-export function getCategorySlugForLabel(label: string): CategorySlug | null {
-  if (label === "Todos") return null;
-  const n = norm(label);
-  if (["carton", "cartón", "visor", "pack", "caja", "cajas"].some((x) => n.includes(norm(x)))) {
-    return "cajas-para-tortas";
-  }
-  if (n.includes("cinta")) return "cintas-para-tortas";
-  if (["impres", "comestible", "azucar", "azúcar", "arroz", "wafer"].some((x) => n.includes(norm(x)))) {
-    return "impresion-comestible";
-  }
-  if (n.includes("topper")) return "toppers";
-  if (n.includes("taller") || n.includes("curso")) return "talleres";
-  if (["torta", "cheesecake", "brownie", "postre"].some((x) => n.includes(x))) {
-    return "tortas";
-  }
-  return null;
-}
-
 export function filterProductsForCategory(
   products: Product[],
   config: CategoryPageConfig
